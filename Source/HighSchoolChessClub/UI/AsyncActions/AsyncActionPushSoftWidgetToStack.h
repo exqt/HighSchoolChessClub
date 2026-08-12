@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Kismet/BlueprintAsyncActionBase.h"
-#include "CCAsyncActionPushSoftWidgetToStack.generated.h"
+#include "AsyncActionPushSoftWidgetToStack.generated.h"
 
 class UCommonActivatableWidget;
 
@@ -15,15 +15,15 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
 	Widget
 );
 
-/** Pushes a soft widget class to a registered UI stack after loading it asynchronously. */
+/** Widget Soft class를 받아 Async로 지정 Stack에 넣음 */
 UCLASS()
-class HIGHSCHOOLCHESSCLUB_API UCCAsyncActionPushSoftWidgetToStack : public UBlueprintAsyncActionBase
+class HIGHSCHOOLCHESSCLUB_API UAsyncActionPushSoftWidgetToStack : public UBlueprintAsyncActionBase
 {
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintCallable, Category = "CC|UI", meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"))
-	static UCCAsyncActionPushSoftWidgetToStack* PushSoftWidgetToStackAsync(
+	UFUNCTION(BlueprintCallable, Category = "UI", meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"))
+	static UAsyncActionPushSoftWidgetToStack* PushSoftWidgetToStackAsync(
 		UObject* WorldContextObject,
 		FGameplayTag WidgetStackTag,
 		TSoftClassPtr<UCommonActivatableWidget> SoftWidgetClass

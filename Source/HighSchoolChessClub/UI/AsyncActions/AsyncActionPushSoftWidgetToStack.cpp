@@ -1,17 +1,17 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "UI/AsyncActions/CCAsyncActionPushSoftWidgetToStack.h"
+#include "UI/AsyncActions/AsyncActionPushSoftWidgetToStack.h"
 
 #include "CommonActivatableWidget.h"
 #include "Engine/Engine.h"
 #include "UI/Core/CCUISubsystem.h"
 
-UCCAsyncActionPushSoftWidgetToStack* UCCAsyncActionPushSoftWidgetToStack::PushSoftWidgetToStackAsync(
+UAsyncActionPushSoftWidgetToStack* UAsyncActionPushSoftWidgetToStack::PushSoftWidgetToStackAsync(
 	UObject* WorldContextObject,
 	FGameplayTag WidgetStackTag,
 	TSoftClassPtr<UCommonActivatableWidget> SoftWidgetClass)
 {
-	UCCAsyncActionPushSoftWidgetToStack* Action = NewObject<UCCAsyncActionPushSoftWidgetToStack>();
+	UAsyncActionPushSoftWidgetToStack* Action = NewObject<UAsyncActionPushSoftWidgetToStack>();
 	Action->WorldContextObject = WorldContextObject;
 	Action->WidgetStackTag = WidgetStackTag;
 	Action->SoftWidgetClass = MoveTemp(SoftWidgetClass);
@@ -19,7 +19,7 @@ UCCAsyncActionPushSoftWidgetToStack* UCCAsyncActionPushSoftWidgetToStack::PushSo
 	return Action;
 }
 
-void UCCAsyncActionPushSoftWidgetToStack::Activate()
+void UAsyncActionPushSoftWidgetToStack::Activate()
 {
 	Super::Activate();
 
@@ -51,7 +51,7 @@ void UCCAsyncActionPushSoftWidgetToStack::Activate()
 	);
 }
 
-void UCCAsyncActionPushSoftWidgetToStack::Complete(UCommonActivatableWidget* Widget)
+void UAsyncActionPushSoftWidgetToStack::Complete(UCommonActivatableWidget* Widget)
 {
 	if (IsValid(Widget))
 	{

@@ -6,6 +6,7 @@
 #include "CommonActivatableWidget.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
 #include "CCPrimaryLayout.h"
+#include "UI/Widgets/ModalScreen.h"
 
 UCCUISubsystem* UCCUISubsystem::Get(const UObject* WorldContextObject)
 {
@@ -24,9 +25,11 @@ void UCCUISubsystem::RegisterCreatedPrimaryLayoutWidget(UCCPrimaryLayout* InCrea
 	CreatedPrimaryLayout = InCreatedWidget;
 }
 
-void UCCUISubsystem::PushSoftWidgetToStackAsync(const FGameplayTag& InWidgetStackTag,
-	TSoftClassPtr<UCommonActivatableWidget> InSoftWidgetClass, TFunction<void(UCommonActivatableWidget*)> InCallback)
-{
+void UCCUISubsystem::PushSoftWidgetToStackAsync(
+	const FGameplayTag& InWidgetStackTag,
+	TSoftClassPtr<UCommonActivatableWidget> InSoftWidgetClass, 
+	TFunction<void(UCommonActivatableWidget*)> InCallback
+) {
 	check(!InSoftWidgetClass.IsNull());
 
 	UAssetManager::Get().GetStreamableManager().RequestAsyncLoad(
@@ -46,5 +49,40 @@ void UCCUISubsystem::PushSoftWidgetToStackAsync(const FGameplayTag& InWidgetStac
 				);
 			}
 		)
+	);
+}
+
+void UCCUISubsystem::PushModalScreenToModalStack(
+	const FText& InScreenTitle, 
+	const FText& InDescription,
+	const TArray<FModalScreenButtonInfo>& InButtons,
+	TSoftClassPtr<UCommonActivatableWidget> InSoftWidgetClass,
+	TFunction<void(FName)> ButtonClickedCallback,
+	TFunction<void(UModalScreen*)> ModalCreatedCallback
+) {	
+	const FGameplayTag ModalStackTag = FGameplayTag::RequestGameplayTag( FName(TEXT("UI.Stack.Modal")), false );
+
+	if (!ModalStackTag.IsValid())
+	{
+		return;
+	}
+	
+	FModalScreenInfo Info;
+	Info.Title = InScreenTitle;
+	Info.Description = InDescription;
+	Info.Buttons = InButtons;
+	
+	PushSoftWidgetToStackAsync(
+		ModalStackTag,
+		InSoftWidgetClass,
+		[ButtonClickedCallback, ModalCreatedCallback, Info](UCommonActivatableWidget* PushedWidget)
+		{
+			UModalScreen* ModalScreen = CastChecked<UModalScreen>(PushedWidget);
+			if (ModalCreatedCallback)
+			{
+				ModalCreatedCallback(ModalScreen);
+			}
+			ModalScreen->InitializeModalScreen(Info, ButtonClickedCallback);
+		}
 	);
 }

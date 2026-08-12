@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "UI/Widgets/ModalScreen.h"
 #include "CCUISubsystem.generated.h"
 
 class UCCPrimaryLayout;
@@ -25,6 +26,15 @@ public:
 		const FGameplayTag& InWidgetStackTag, 
 		TSoftClassPtr<UCommonActivatableWidget> InSoftWidgetClass,
 		TFunction<void(UCommonActivatableWidget*)> InCallback
+	);
+	
+	void PushModalScreenToModalStack(
+		const FText& InScreenTitle, 
+		const FText& InDescription,
+		const TArray<FModalScreenButtonInfo>& InButtons,
+		TSoftClassPtr<UCommonActivatableWidget> InSoftWidgetClass,
+		TFunction<void(FName)> ButtonClickedCallback,
+		TFunction<void(UModalScreen*)> ModalCreatedCallback = {}
 	);
 	
 private:
