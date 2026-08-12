@@ -7,10 +7,18 @@
 		{
 			"Name": "HighSchoolChessClub",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"CommonUI",
+				"Engine"
+			]
 		}
 	],
 	"Plugins": [
+		{
+			"Name": "CommonUI",
+			"Enabled": true
+		},
 		{
 			"Name": "ModelingToolsEditorMode",
 			"Enabled": true,
@@ -74,6 +82,14 @@
 				"Linux",
 				"Mac"
 			]
+		},
+		{
+			"Name": "MCPClientToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "ModelContextProtocol",
+			"Enabled": true
 		}
 	]
 }
