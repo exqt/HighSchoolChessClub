@@ -46,9 +46,7 @@ void UAsyncActionPushModalScreen::Activate()
 	);
 
 	UISubsystem->PushModalScreenToModalStack(
-		ModalScreenInfo.Title,
-		ModalScreenInfo.Description,
-		ModalScreenInfo.Buttons,
+		ModalScreenInfo,
 		ActivatableWidgetClass,
 		[WeakThis](const FName ButtonType)
 		{

@@ -9,6 +9,7 @@
 
 class UDynamicEntryBox;
 class UCommonTextBlock;
+class UCCButtonBase;
 
 USTRUCT(BlueprintType)
 struct HIGHSCHOOLCHESSCLUB_API FModalScreenButtonInfo
@@ -35,6 +36,10 @@ struct HIGHSCHOOLCHESSCLUB_API FModalScreenInfo
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modal")
 	TArray<FModalScreenButtonInfo> Buttons;
+
+	/** Button index that receives focus when the modal is activated. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Modal", meta = (ClampMin = "0"))
+	int32 FocusButtonIndex = 0;
 };
 
 /**
@@ -48,6 +53,9 @@ class HIGHSCHOOLCHESSCLUB_API UModalScreen : public UCommonActivatableWidget
 public:
 	void InitializeModalScreen(const FModalScreenInfo& InScreenInfo, TFunction<void(FName)> ClickedButtonCallback);
 
+protected:
+	virtual UWidget* NativeGetDesiredFocusTarget() const override;
+
 private:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UCommonTextBlock> Title;
@@ -57,4 +65,7 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UDynamicEntryBox> DynamicEntryBox;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UCCButtonBase> DesiredFocusButton;
 };

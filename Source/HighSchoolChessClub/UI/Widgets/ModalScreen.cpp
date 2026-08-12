@@ -11,6 +11,7 @@ void UModalScreen::InitializeModalScreen(const FModalScreenInfo& InScreenInfo, T
 {
 	Title->SetText(InScreenInfo.Title);
 	Description->SetText(InScreenInfo.Description);
+	DesiredFocusButton = nullptr;
 	
 	// 기존 버튼이 남아 있다면 정리
 	// 초기화하는 이유: ActivatableContainer는 기존 Widget을 재사용하는 Pooling 기능이 항상 적용됨
@@ -22,10 +23,21 @@ void UModalScreen::InitializeModalScreen(const FModalScreenInfo& InScreenInfo, T
 		);
 	}
 
-	for (const FModalScreenButtonInfo& AvailableButtonInfo : InScreenInfo.Buttons)
-	{	
+	const int32 DesiredFocusIndex = InScreenInfo.Buttons.IsValidIndex(InScreenInfo.FocusButtonIndex)
+		? InScreenInfo.FocusButtonIndex
+		: 0;
+
+	for (int32 ButtonIndex = 0; ButtonIndex < InScreenInfo.Buttons.Num(); ++ButtonIndex)
+	{
+		const FModalScreenButtonInfo& AvailableButtonInfo = InScreenInfo.Buttons[ButtonIndex];
 		UCCButtonBase* AddedButton = DynamicEntryBox->CreateEntry<UCCButtonBase>();
 		AddedButton->SetButtonText(AvailableButtonInfo.ButtonTextToDisplay);
+
+		if (ButtonIndex == DesiredFocusIndex)
+		{
+			DesiredFocusButton = AddedButton;
+		}
+
 		AddedButton->OnClicked().AddLambda(
 			[ClickedButtonCallback, AvailableButtonInfo, this]()
 			{
@@ -34,4 +46,14 @@ void UModalScreen::InitializeModalScreen(const FModalScreenInfo& InScreenInfo, T
 			}
 		);
 	}
+
+	if (DesiredFocusButton)
+	{
+		RequestRefreshFocus();
+	}
+}
+
+UWidget* UModalScreen::NativeGetDesiredFocusTarget() const
+{
+	return DesiredFocusButton ? DesiredFocusButton.Get() : Super::NativeGetDesiredFocusTarget();
 }

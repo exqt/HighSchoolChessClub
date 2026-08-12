@@ -29,9 +29,7 @@ public:
 	);
 	
 	void PushModalScreenToModalStack(
-		const FText& InScreenTitle, 
-		const FText& InDescription,
-		const TArray<FModalScreenButtonInfo>& InButtons,
+		const FModalScreenInfo& InScreenInfo,
 		TSoftClassPtr<UCommonActivatableWidget> InSoftWidgetClass,
 		TFunction<void(FName)> ButtonClickedCallback,
 		TFunction<void(UModalScreen*)> ModalCreatedCallback = {}

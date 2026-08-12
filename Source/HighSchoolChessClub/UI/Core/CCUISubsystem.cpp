@@ -53,36 +53,29 @@ void UCCUISubsystem::PushSoftWidgetToStackAsync(
 }
 
 void UCCUISubsystem::PushModalScreenToModalStack(
-	const FText& InScreenTitle, 
-	const FText& InDescription,
-	const TArray<FModalScreenButtonInfo>& InButtons,
+	const FModalScreenInfo& InScreenInfo,
 	TSoftClassPtr<UCommonActivatableWidget> InSoftWidgetClass,
 	TFunction<void(FName)> ButtonClickedCallback,
 	TFunction<void(UModalScreen*)> ModalCreatedCallback
-) {	
-	const FGameplayTag ModalStackTag = FGameplayTag::RequestGameplayTag( FName(TEXT("UI.Stack.Modal")), false );
+) {
+	const FGameplayTag ModalStackTag = FGameplayTag::RequestGameplayTag(FName(TEXT("UI.Stack.Modal")), false);
 
 	if (!ModalStackTag.IsValid())
 	{
 		return;
 	}
-	
-	FModalScreenInfo Info;
-	Info.Title = InScreenTitle;
-	Info.Description = InDescription;
-	Info.Buttons = InButtons;
-	
+
 	PushSoftWidgetToStackAsync(
 		ModalStackTag,
 		InSoftWidgetClass,
-		[ButtonClickedCallback, ModalCreatedCallback, Info](UCommonActivatableWidget* PushedWidget)
+		[ButtonClickedCallback, ModalCreatedCallback, InScreenInfo](UCommonActivatableWidget* PushedWidget)
 		{
 			UModalScreen* ModalScreen = CastChecked<UModalScreen>(PushedWidget);
 			if (ModalCreatedCallback)
 			{
 				ModalCreatedCallback(ModalScreen);
 			}
-			ModalScreen->InitializeModalScreen(Info, ButtonClickedCallback);
+			ModalScreen->InitializeModalScreen(InScreenInfo, ButtonClickedCallback);
 		}
 	);
 }
