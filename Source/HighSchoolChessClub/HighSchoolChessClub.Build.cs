@@ -29,7 +29,11 @@ public class HighSchoolChessClub : ModuleRules
 		{
 			"DeveloperSettings",
 			"Slate",
-			"SlateCore"
+			"SlateCore", 
+			"GameSettings",
+			"AudioMixer",
+			"AudioModulation",
+			"PropertyPath"
 		});
 
 		// Uncomment if you are using Slate UI
