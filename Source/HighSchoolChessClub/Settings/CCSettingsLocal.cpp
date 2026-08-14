@@ -145,6 +145,7 @@ void UCCSettingsLocal::LoadUserControlBusMix()
 					if (USoundControlBusMix* SoundControlBusMix = Cast<USoundControlBusMix>(ObjPath))
 					{
 						ControlBusMix = SoundControlBusMix;
+						UAudioModulationStatics::ActivateBusMix(World, ControlBusMix);
 
 						const FSoundControlBusMixStage OverallControlBusMixStage = UAudioModulationStatics::CreateBusMixStage(World, OverallControlBus, OverallVolume);
 						const FSoundControlBusMixStage MusicControlBusMixStage = UAudioModulationStatics::CreateBusMixStage(World, MusicControlBus, MusicVolume);
