@@ -2,6 +2,9 @@
 
 
 #include "CCGameSettingRegistry.h"
+#include "GameSettingCollection.h"
+
+#include "Player/CCLocalPlayer.h"
 
 UCCGameSettingRegistry::UCCGameSettingRegistry()
 {
@@ -22,11 +25,19 @@ UCCGameSettingRegistry* UCCGameSettingRegistry::Get(ULocalPlayer* InLocalPlayer)
 void UCCGameSettingRegistry::SaveChanges()
 {
 	Super::SaveChanges();
+	
+	if (UCCSettingsLocal* Settings = UCCSettingsLocal::Get())
+	{
+		Settings->SaveSettings();
+	}
 }
 
 void UCCGameSettingRegistry::OnInitialize(ULocalPlayer* InLocalPlayer)
 {
-	Super::OnInitialize(InLocalPlayer);
+	UCCLocalPlayer* CCLocalPlayer = Cast<UCCLocalPlayer>(InLocalPlayer);
+
+	AudioSettings = InitializeAudioSettings(CCLocalPlayer);
+	RegisterSetting(AudioSettings);
 }
 
 bool UCCGameSettingRegistry::IsFinishedInitializing() const

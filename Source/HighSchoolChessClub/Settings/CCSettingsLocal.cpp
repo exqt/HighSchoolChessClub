@@ -132,7 +132,7 @@ void UCCSettingsLocal::LoadUserControlBusMix()
 					if (USoundControlBus* SoundControlBus = Cast<USoundControlBus>(ObjPath))
 					{
 						SoundFXControlBus = SoundControlBus;
-						ControlBusMap.Add(TEXT("SoundFX"), SoundFXControlBus);
+						ControlBusMap.Add(TEXT("SFX"), SoundFXControlBus);
 					}
 					else
 					{

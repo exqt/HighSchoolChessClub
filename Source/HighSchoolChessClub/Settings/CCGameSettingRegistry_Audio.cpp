@@ -64,12 +64,6 @@ UGameSettingCollection* UCCGameSettingRegistry::InitializeAudioSettings(ULocalPl
 			Setting->SetDevName(TEXT("SoundEffectsVolume"));
 			Setting->SetDisplayName(LOCTEXT("SoundEffectsVolume_Name", "Sound Effects"));
 			Setting->SetDescriptionRichText(LOCTEXT("SoundEffectsVolume_Description", "Adjusts the volume of sound effects."));
-			
-			auto k = MakeShared<FGameSettingDataSourceDynamic>(TArray<FString>{
-				"GetLocalSettings",
-				"GetSoundEffectsVolume",
-			});
-
 			Setting->SetDynamicGetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(GetSFXVolume));
 			Setting->SetDynamicSetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(SetSFXVolume));
 			Setting->SetDefaultValue(GetDefault<UCCSettingsLocal>()->GetSFXVolume());
