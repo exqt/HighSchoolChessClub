@@ -28,6 +28,7 @@ public class HighSchoolChessClub : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
 			"DeveloperSettings",
+			"MoviePlayer",
 			"Slate",
 			"SlateCore", 
 			"GameSettings",

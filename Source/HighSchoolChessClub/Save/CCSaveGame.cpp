@@ -2,3 +2,8 @@
 
 
 #include "CCSaveGame.h"
+
+void UCCSaveGame::InitializeNewGame()
+{
+	LastPosition = FVector::ZeroVector;
+}

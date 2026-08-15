@@ -13,4 +13,11 @@ UCLASS()
 class HIGHSCHOOLCHESSCLUB_API UCCSaveGame : public USaveGame
 {
 	GENERATED_BODY()
+
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, SaveGame, Category = "Save Game")
+	FVector LastPosition;
+	
+	UFUNCTION(BlueprintCallable, Category = "Save Game")
+	void InitializeNewGame();
 };
