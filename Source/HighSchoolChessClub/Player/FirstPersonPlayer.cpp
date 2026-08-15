@@ -7,6 +7,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
+#include "Game/InteractionComponent.h"
 
 AFirstPersonPlayer::AFirstPersonPlayer()
 {
@@ -22,6 +23,8 @@ AFirstPersonPlayer::AFirstPersonPlayer()
 	FirstPersonCameraComponent->bEnableFirstPersonScale = true;
 	FirstPersonCameraComponent->FirstPersonFieldOfView = 70.0f;
 	FirstPersonCameraComponent->FirstPersonScale = 0.6f;
+	
+	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("Interaction Component"));
 
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 	GetCharacterMovement()->AirControl = 0.5f;
@@ -69,6 +72,8 @@ void AFirstPersonPlayer::LookInput(const FInputActionValue& Value)
 
 void AFirstPersonPlayer::Interact()
 {
+	UE_LOG(LogTemp, Log, TEXT("Interacting:"));
+	InteractionComponent->TryInteract();
 }
 
 void AFirstPersonPlayer::DoAim(float Yaw, float Pitch)

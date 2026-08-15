@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "FirstPersonPlayer.generated.h"
 
+class UInteractionComponent;
 struct FInputActionValue;
 class UInputAction;
 class UCameraComponent;
@@ -17,6 +18,9 @@ class HIGHSCHOOLCHESSCLUB_API AFirstPersonPlayer : public ACharacter
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FirstPersonCameraComponent;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UInteractionComponent* InteractionComponent;
 
 protected:
 
