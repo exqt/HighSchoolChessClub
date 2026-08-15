@@ -98,6 +98,10 @@
 		{
 			"Name": "AudioModulation",
 			"Enabled": true
+		},
+		{
+			"Name": "GPULightmass",
+			"Enabled": true
 		}
 	]
 }
