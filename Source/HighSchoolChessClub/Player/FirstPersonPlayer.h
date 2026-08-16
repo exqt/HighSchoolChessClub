@@ -7,6 +7,8 @@
 #include "FirstPersonPlayer.generated.h"
 
 class UInteractionComponent;
+class AChessPlayer;
+class AActor;
 struct FInputActionValue;
 class UInputAction;
 class UCameraComponent;
@@ -23,65 +25,55 @@ class HIGHSCHOOLCHESSCLUB_API AFirstPersonPlayer : public ACharacter
 	UInteractionComponent* InteractionComponent;
 
 protected:
-
-	/** Jump Input Action */
-	UPROPERTY(EditAnywhere, Category ="Input")
-	UInputAction* JumpAction;
-
-	/** Move Input Action */
+	
+#pragma region Input Bindings
 	UPROPERTY(EditAnywhere, Category ="Input")
 	UInputAction* MoveAction;
 
-	/** Look Input Action */
 	UPROPERTY(EditAnywhere, Category ="Input")
 	class UInputAction* LookAction;
 
-	/** Mouse Look Input Action */
-	UPROPERTY(EditAnywhere, Category ="Input")
-	class UInputAction* MouseLookAction;
-
-	/** Interact Input Action */
 	UPROPERTY(EditAnywhere, Category ="Input")
 	TObjectPtr<UInputAction> InteractAction;
+#pragma endregion
 	
 public:
 	AFirstPersonPlayer();
 
+	UFUNCTION(BlueprintCallable, Category="Interaction")
+	bool SitDown(AActor* SeatActor);
+
+	UFUNCTION(BlueprintCallable, Category="Interaction")
+	bool StartPlayingChess(AActor* ViewTargetActor = nullptr);
+
+	UFUNCTION(BlueprintCallable, Category="Interaction")
+	void StopPlayingChess();
+
+	UFUNCTION(BlueprintCallable, Category="Interaction")
+	void StandUp();
+
+	UFUNCTION(BlueprintPure, Category="Interaction")
+	bool IsSeated() const;
+
+	void NotifyChessPlayerEnded(AChessPlayer* EndedPawn);
+
 protected:
-
-	/** Called from Input Actions for movement input */
 	void MoveInput(const FInputActionValue& Value);
-
-	/** Called from Input Actions for looking input */
 	void LookInput(const FInputActionValue& Value);
-
-	/** Interacts with the focused actor, or advances an active dialogue. */
 	void Interact();
 
-	/** Handles aim inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoAim(float Yaw, float Pitch);
 
-	/** Handles move inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoMove(float Right, float Forward);
 
-	/** Handles jump start inputs from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoJumpStart();
-
-	/** Handles jump end inputs from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoJumpEnd();
-
 protected:
-
-	/** Set up input action bindings */
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
-	
-public:
 
-	/** Returns first person camera component **/
-	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
-	
+private:
+	bool EnterChessPlayer(AChessPlayer* InChessPlayer, bool bPlayingChess);
+
+	UPROPERTY(Transient)
+	TObjectPtr<AChessPlayer> CurrentChessPlayer;
 };

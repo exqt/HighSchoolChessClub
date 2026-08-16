@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
 #include "Game/InteractionComponent.h"
+#include "ChessPlayer.h"
 
 AFirstPersonPlayer::AFirstPersonPlayer()
 {
@@ -32,15 +33,10 @@ AFirstPersonPlayer::AFirstPersonPlayer()
 
 void AFirstPersonPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {	
-	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AFirstPersonPlayer::MoveInput);
-
-		// Looking/Aiming
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AFirstPersonPlayer::LookInput);
-		EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &AFirstPersonPlayer::LookInput);
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AFirstPersonPlayer::Interact);
 	}
 	else
@@ -52,58 +48,82 @@ void AFirstPersonPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 void AFirstPersonPlayer::MoveInput(const FInputActionValue& Value)
 {
-	// get the Vector2D move axis
-	FVector2D MovementVector = Value.Get<FVector2D>();
-
-	// pass the axis values to the move input
+	const FVector2D MovementVector = Value.Get<FVector2D>();
 	DoMove(MovementVector.X, MovementVector.Y);
-
 }
 
 void AFirstPersonPlayer::LookInput(const FInputActionValue& Value)
 {
-	// get the Vector2D look axis
-	FVector2D LookAxisVector = Value.Get<FVector2D>();
-
-	// pass the axis values to the aim input
+	const FVector2D LookAxisVector = Value.Get<FVector2D>();
 	DoAim(LookAxisVector.X, LookAxisVector.Y);
-
 }
 
 void AFirstPersonPlayer::Interact()
 {
-	UE_LOG(LogTemp, Log, TEXT("Interacting:"));
 	InteractionComponent->TryInteract();
+}
+
+bool AFirstPersonPlayer::SitDown(AActor* SeatActor)
+{
+	return EnterChessPlayer(Cast<AChessPlayer>(SeatActor), false);
+}
+
+bool AFirstPersonPlayer::StartPlayingChess(AActor* ViewTargetActor)
+{
+	return EnterChessPlayer(Cast<AChessPlayer>(ViewTargetActor), true);
+}
+
+void AFirstPersonPlayer::StopPlayingChess()
+{
+}
+
+void AFirstPersonPlayer::StandUp()
+{
+	if (IsValid(CurrentChessPlayer))
+	{
+		CurrentChessPlayer->ReturnToExploration();
+	}
+}
+
+bool AFirstPersonPlayer::IsSeated() const
+{
+	return false;
+}
+
+void AFirstPersonPlayer::NotifyChessPlayerEnded(AChessPlayer* EndedPawn)
+{
+	if (CurrentChessPlayer == EndedPawn)
+	{
+		CurrentChessPlayer = nullptr;
+	}
 }
 
 void AFirstPersonPlayer::DoAim(float Yaw, float Pitch)
 {
 	if (GetController())
 	{
-		// pass the rotation inputs
 		AddControllerYawInput(Yaw);
 		AddControllerPitchInput(Pitch);
 	}
+}
+
+bool AFirstPersonPlayer::EnterChessPlayer(AChessPlayer* InChessPlayer, bool bPlayingChess)
+{
+	const EChessPlayerMode NewMode = bPlayingChess ? EChessPlayerMode::PlayingChess : EChessPlayerMode::Seated;
+	if (!InChessPlayer->EnterPlayer(this))
+	{
+		return false;
+	}
+
+	CurrentChessPlayer = InChessPlayer;
+	return true;
 }
 
 void AFirstPersonPlayer::DoMove(float Right, float Forward)
 {
 	if (GetController())
 	{
-		// pass the move inputs
 		AddMovementInput(GetActorRightVector(), Right);
 		AddMovementInput(GetActorForwardVector(), Forward);
 	}
-}
-
-void AFirstPersonPlayer::DoJumpStart()
-{
-	// pass Jump to the character
-	Jump();
-}
-
-void AFirstPersonPlayer::DoJumpEnd()
-{
-	// pass StopJumping to the character
-	StopJumping();
 }
