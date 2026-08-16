@@ -29,15 +29,24 @@ AChessPlayer::AChessPlayer()
 	InteractionName = NSLOCTEXT("ChessPlayer", "InteractionName", "앉기");
 }
 
+void AChessPlayer::BeginPlay()
+{
+	Super::BeginPlay();
+	InitialChairCameraRelativeRotation = ChairCamera->GetRelativeRotation();
+}
+
 bool AChessPlayer::EnterPlayer(AFirstPersonPlayer* InExplorationPawn) 
 {
 	APlayerController* PlayerController = Cast<APlayerController>(InExplorationPawn->GetController());
+	ChairCamera->SetRelativeRotation(InitialChairCameraRelativeRotation);
+	const FRotator ChairViewRotation = ChairCamera->GetComponentRotation();
 	ExplorationPawn = InExplorationPawn;
 
 	InExplorationPawn->GetCharacterMovement()->StopMovementImmediately();
 	InExplorationPawn->GetCharacterMovement()->DisableMovement();
 
 	PlayerController->Possess(this);
+	PlayerController->SetControlRotation(ChairViewRotation);
 
 	BeginPlayerView(PlayerController);
 	PlayerController->SetViewTargetWithBlend(this, CameraBlendTime, VTBlend_EaseInOut, 2.0f, true);

@@ -43,6 +43,7 @@ public:
 	virtual FText GetInteractionName_Implementation() override;
 
 protected:
+	virtual void BeginPlay() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	
 #pragma region Components
@@ -68,6 +69,7 @@ private:
 	TObjectPtr<AFirstPersonPlayer> ExplorationPawn;
 
 	TWeakObjectPtr<APlayerController> ViewingController;
+	FRotator InitialChairCameraRelativeRotation = FRotator::ZeroRotator;
 	
 	float CameraBlendTime = 1.0f;
 	
