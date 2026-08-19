@@ -5,12 +5,13 @@
 #include "GameFramework/Character.h"
 #include "GameplayTagContainer.h"
 #include "Dialogue/CCCharacterData.h"
+#include "Game/ChessParticipant.h"
 #include "NPCBase.generated.h"
 
 class UWidgetComponent;
 
 UCLASS(Blueprintable)
-class HIGHSCHOOLCHESSCLUB_API ANPCBase : public ACharacter, public IInteractable
+class HIGHSCHOOLCHESSCLUB_API ANPCBase : public ACharacter, public IInteractable, public IChessParticipant
 {
 	GENERATED_BODY()
 

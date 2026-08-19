@@ -23,7 +23,7 @@ enum class EChessPlayerMode : uint8
 };
 
 UCLASS(Blueprintable)
-class HIGHSCHOOLCHESSCLUB_API AChessPlayer : public APawn, public IInteractable
+class HIGHSCHOOLCHESSCLUB_API AChessPlayer : public APawn, public IInteractable, public IChessParticipant
 {
 	GENERATED_BODY()
 
