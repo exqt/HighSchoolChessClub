@@ -40,22 +40,10 @@ protected:
 public:
 	AFirstPersonPlayer();
 
-	UFUNCTION(BlueprintCallable, Category="Interaction")
-	bool SitDown(AActor* SeatActor);
-
-	UFUNCTION(BlueprintCallable, Category="Interaction")
-	bool StartPlayingChess(AActor* ViewTargetActor = nullptr);
-
-	UFUNCTION(BlueprintCallable, Category="Interaction")
-	void StopPlayingChess();
-
-	UFUNCTION(BlueprintCallable, Category="Interaction")
-	void StandUp();
-
-	UFUNCTION(BlueprintPure, Category="Interaction")
-	bool IsSeated() const;
-
 	void NotifyChessPlayerEnded(AChessPlayer* EndedPawn);
+	
+	UFUNCTION(BlueprintCallable, Category="Chess Player")
+	bool EnterChessPlayer(AChessPlayer* InChessPlayer);
 
 protected:
 	void MoveInput(const FInputActionValue& Value);
@@ -68,12 +56,9 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoMove(float Right, float Forward);
 
-protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 
 private:
-	bool EnterChessPlayer(AChessPlayer* InChessPlayer, bool bPlayingChess);
-
 	UPROPERTY(Transient)
 	TObjectPtr<AChessPlayer> CurrentChessPlayer;
 };

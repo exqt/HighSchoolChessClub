@@ -14,10 +14,29 @@ AFirstPersonPlayerController::AFirstPersonPlayerController()
 	PlayerCameraManagerClass = AFirstPersonPlayerCameraManager::StaticClass();
 }
 
+void AFirstPersonPlayerController::SetControlMode(EControlMode ControlMode) const
+{
+	if (!IsLocalPlayerController()) return;
+	
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
+	if (!Subsystem) return;
+	
+	Subsystem->RemoveMappingContext(DefaultMappingContext);
+	Subsystem->RemoveMappingContext(ChessMappingContext);
+	
+	if (ControlMode == EControlMode::FirstPerson)
+	{
+		Subsystem->AddMappingContext(DefaultMappingContext, 0);
+	}
+	else if (ControlMode == EControlMode::Chess)
+	{
+		Subsystem->AddMappingContext(ChessMappingContext, 0);
+	}
+}
+
 void AFirstPersonPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-
 	
 	// only spawn touch controls on local player controllers
 	if (IsLocalPlayerController() && ShouldUseTouchControls())
@@ -42,29 +61,7 @@ void AFirstPersonPlayerController::BeginPlay()
 void AFirstPersonPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
-
-	// only add IMCs for local player controllers
-	if (IsLocalPlayerController())
-	{
-		// Add Input Mapping Context
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
-		{
-			for (UInputMappingContext* CurrentContext : DefaultMappingContexts)
-			{
-				Subsystem->AddMappingContext(CurrentContext, 0);
-			}
-
-			// only add these IMCs if we're not using mobile touch input
-			if (!ShouldUseTouchControls())
-			{
-				for (UInputMappingContext* CurrentContext : MobileExcludedMappingContexts)
-				{
-					Subsystem->AddMappingContext(CurrentContext, 0);
-				}
-			}
-		}
-	}
-	
+	SetControlMode(EControlMode::FirstPerson);	
 }
 
 bool AFirstPersonPlayerController::ShouldUseTouchControls() const

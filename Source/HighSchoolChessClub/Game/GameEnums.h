@@ -8,3 +8,9 @@ enum class EChessPlayerColor : uint8
 	Random
 };
 
+UENUM(BlueprintType)
+enum class EControlMode : uint8
+{
+	FirstPerson = 0,
+	Chess = 1,
+};

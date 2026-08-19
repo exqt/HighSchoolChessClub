@@ -4,12 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Game/GameEnums.h"
 #include "FirstPersonPlayerController.generated.h"
 
 class UInputMappingContext;
-/**
- * 
- */
+
 UCLASS()
 class HIGHSCHOOLCHESSCLUB_API AFirstPersonPlayerController : public APlayerController
 {
@@ -17,20 +16,22 @@ class HIGHSCHOOLCHESSCLUB_API AFirstPersonPlayerController : public APlayerContr
 	
 public:
 
-	/** Constructor */
 	AFirstPersonPlayerController();
+	
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	void SetControlMode(EControlMode ControlMode) const;
 
 protected:
 
-	/** Input Mapping Contexts */
 	UPROPERTY(EditAnywhere, Category="Input|Input Mappings")
-	TArray<UInputMappingContext*> DefaultMappingContexts;
+	UInputMappingContext* DefaultMappingContext;
+	
+	UPROPERTY(EditAnywhere, Category="Input|Input Mappings")
+	UInputMappingContext* ChessMappingContext;
 
-	/** Input Mapping Contexts */
 	UPROPERTY(EditAnywhere, Category="Input|Input Mappings")
 	TArray<UInputMappingContext*> MobileExcludedMappingContexts;
 
-	/** Mobile controls widget to spawn */
 	UPROPERTY(EditAnywhere, Category="Input|Touch Controls")
 	TSubclassOf<UUserWidget> MobileControlsWidgetClass;
 

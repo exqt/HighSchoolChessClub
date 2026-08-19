@@ -9,13 +9,15 @@
 #include "EnhancedInputComponent.h"
 #include "Game/InteractionComponent.h"
 #include "ChessPlayer.h"
+#include "FirstPersonPlayerCameraManager.h"
+#include "FirstPersonPlayerController.h"
 
 AFirstPersonPlayer::AFirstPersonPlayer()
 {
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
 	GetCapsuleComponent()->SetCapsuleSize(34.0f, 96.0f);
-	
-	// Create the Camera Component	
+
+	// Create the Camera Component
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("First Person Camera"));
 	FirstPersonCameraComponent->SetupAttachment(GetMesh());
 	FirstPersonCameraComponent->SetRelativeLocationAndRotation(FVector(-2.8f, 5.89f, 0.0f), FRotator(0.0f, 90.0f, -90.0f));
@@ -24,7 +26,7 @@ AFirstPersonPlayer::AFirstPersonPlayer()
 	FirstPersonCameraComponent->bEnableFirstPersonScale = true;
 	FirstPersonCameraComponent->FirstPersonFieldOfView = 70.0f;
 	FirstPersonCameraComponent->FirstPersonScale = 0.6f;
-	
+
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("Interaction Component"));
 
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
@@ -32,7 +34,7 @@ AFirstPersonPlayer::AFirstPersonPlayer()
 }
 
 void AFirstPersonPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{	
+{
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AFirstPersonPlayer::MoveInput);
@@ -63,33 +65,6 @@ void AFirstPersonPlayer::Interact()
 	InteractionComponent->TryInteract();
 }
 
-bool AFirstPersonPlayer::SitDown(AActor* SeatActor)
-{
-	return EnterChessPlayer(Cast<AChessPlayer>(SeatActor), false);
-}
-
-bool AFirstPersonPlayer::StartPlayingChess(AActor* ViewTargetActor)
-{
-	return EnterChessPlayer(Cast<AChessPlayer>(ViewTargetActor), true);
-}
-
-void AFirstPersonPlayer::StopPlayingChess()
-{
-}
-
-void AFirstPersonPlayer::StandUp()
-{
-	if (IsValid(CurrentChessPlayer))
-	{
-		CurrentChessPlayer->ReturnToExploration();
-	}
-}
-
-bool AFirstPersonPlayer::IsSeated() const
-{
-	return false;
-}
-
 void AFirstPersonPlayer::NotifyChessPlayerEnded(AChessPlayer* EndedPawn)
 {
 	if (CurrentChessPlayer == EndedPawn)
@@ -107,14 +82,18 @@ void AFirstPersonPlayer::DoAim(float Yaw, float Pitch)
 	}
 }
 
-bool AFirstPersonPlayer::EnterChessPlayer(AChessPlayer* InChessPlayer, bool bPlayingChess)
+bool AFirstPersonPlayer::EnterChessPlayer(AChessPlayer* InChessPlayer)
 {
-	const EChessPlayerMode NewMode = bPlayingChess ? EChessPlayerMode::PlayingChess : EChessPlayerMode::Seated;
+	// EnterPlayer transfers possession, so keep the controller before that happens.
+	AFirstPersonPlayerController* PlayerController = Cast<AFirstPersonPlayerController>(GetController());
+
 	if (!InChessPlayer->EnterPlayer(this))
 	{
 		return false;
 	}
 
+	PlayerController->SetControlMode(EControlMode::Chess);
+	
 	CurrentChessPlayer = InChessPlayer;
 	return true;
 }
