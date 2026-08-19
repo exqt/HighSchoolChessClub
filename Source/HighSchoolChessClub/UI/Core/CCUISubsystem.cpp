@@ -10,18 +10,12 @@
 
 UCCUISubsystem* UCCUISubsystem::Get(const UObject* WorldContextObject)
 {
-	if (GEngine)
-	{
-		UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject,EGetWorldErrorMode::Assert);
-		return UGameInstance::GetSubsystem<UCCUISubsystem>(World->GetGameInstance());
-	}
-
-	return nullptr;
+	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject,EGetWorldErrorMode::Assert);
+	return UGameInstance::GetSubsystem<UCCUISubsystem>(World->GetGameInstance());
 }
 
 void UCCUISubsystem::RegisterCreatedPrimaryLayoutWidget(UCCPrimaryLayout* InCreatedWidget)
 {
-	check(InCreatedWidget);
 	CreatedPrimaryLayout = InCreatedWidget;
 }
 
@@ -30,22 +24,21 @@ void UCCUISubsystem::PushSoftWidgetToStackAsync(
 	TSoftClassPtr<UCommonActivatableWidget> InSoftWidgetClass, 
 	TFunction<void(UCommonActivatableWidget*)> InCallback
 ) {
-	check(!InSoftWidgetClass.IsNull());
-
 	UAssetManager::Get().GetStreamableManager().RequestAsyncLoad(
 		InSoftWidgetClass.ToSoftObjectPath(),
 		FStreamableDelegate::CreateLambda(
 			[InSoftWidgetClass, this, InWidgetStackTag, InCallback]()
 			{
 				UClass* LoadedWidgetClass = InSoftWidgetClass.Get();
-				
-				check(LoadedWidgetClass && CreatedPrimaryLayout);
+				UCommonActivatableWidgetContainerBase* FoundWidgetStack =
+					CreatedPrimaryLayout->FindWidgetStackByTag(InWidgetStackTag);
 
-				UCommonActivatableWidgetContainerBase* FoundWidgetStack = CreatedPrimaryLayout->FindWidgetStackByTag(InWidgetStackTag);
-
-				UCommonActivatableWidget* CreatedWidget = FoundWidgetStack->AddWidget<UCommonActivatableWidget>(
+				FoundWidgetStack->AddWidget<UCommonActivatableWidget>(
 					LoadedWidgetClass,
-					[InCallback](UCommonActivatableWidget& CreatedWidgetInstance) { InCallback(&CreatedWidgetInstance); }
+					[InCallback](UCommonActivatableWidget& CreatedWidgetInstance)
+					{
+						InCallback(&CreatedWidgetInstance);
+					}
 				);
 			}
 		)
@@ -60,17 +53,13 @@ void UCCUISubsystem::PushModalScreenToModalStack(
 ) {
 	const FGameplayTag ModalStackTag = FGameplayTag::RequestGameplayTag(FName(TEXT("UI.Stack.Modal")), false);
 
-	if (!ModalStackTag.IsValid())
-	{
-		return;
-	}
-
 	PushSoftWidgetToStackAsync(
 		ModalStackTag,
 		InSoftWidgetClass,
 		[ButtonClickedCallback, ModalCreatedCallback, InScreenInfo](UCommonActivatableWidget* PushedWidget)
 		{
 			UModalScreen* ModalScreen = CastChecked<UModalScreen>(PushedWidget);
+
 			if (ModalCreatedCallback)
 			{
 				ModalCreatedCallback(ModalScreen);
