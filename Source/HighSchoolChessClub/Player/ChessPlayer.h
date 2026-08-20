@@ -51,6 +51,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 #pragma region Components
@@ -79,9 +80,21 @@ protected:
 private:
 	void BeginPlayerView(APlayerController* PlayerController);
 	void EndPlayerView(APlayerController* PlayerController);
+	
+#pragma region Input Bindings
 	void LookInput(const FInputActionValue& Value);
+	void LookHoldStarted(const FInputActionValue& InputActionValue);
+	void LookHoldEnded(const FInputActionValue& InputActionValue);
+	void TickCamera(float DeltaTime);
+	void StickLookStarted(const FInputActionValue& InputActionValue);
+	void StickLookInput(const FInputActionValue& InputActionValue);
+	void StickLookEnded(const FInputActionValue& InputActionValue);
+#pragma endregion
+	
+#pragma region Cursor Movement
 	void CursorMoveInput(const FInputActionValue& Value);
 	FIntPoint ConvertInputToBoardDelta(FIntPoint InputDelta) const;
+#pragma endregion
 
 	UPROPERTY(Transient)
 	TObjectPtr<AFirstPersonPlayer> ExplorationPawn;
@@ -94,21 +107,30 @@ private:
 
 	TWeakObjectPtr<APlayerController> ViewingController;
 	FRotator InitialChairCameraRelativeRotation = FRotator::ZeroRotator;
+	FRotator InitialViewRotation = FRotator::ZeroRotator;
 	float PreviousViewYawMin = 0.0f;
 	float PreviousViewYawMax = 0.0f;
 	float PreviousViewPitchMin = 0.0f;
 	float PreviousViewPitchMax = 0.0f;
 
 	float CameraBlendTime = 1.0f;
-
+	bool bLookHold = false;
+	bool bStickLookActive = false;
+	
 #pragma region Input Bindings
 	UPROPERTY(EditAnywhere, Category ="Input")
-	class UInputAction* LookAction;
+	TObjectPtr<UInputAction> LookAction;
 
 	UPROPERTY(EditAnywhere, Category ="Input")
 	TObjectPtr<UInputAction> CursorMoveAction;
 
 	UPROPERTY(EditAnywhere, Category ="Input", meta=(ClampMin="0.0", ClampMax="1.0"))
 	float CursorMoveThreshold = 0.5f;
+	
+	UPROPERTY(EditAnywhere, Category ="Input")
+	TObjectPtr<UInputAction> LookHoldAction;
+	
+	UPROPERTY(EditAnywhere, Category ="Input")
+	TObjectPtr<UInputAction> JoystickLookAction;
 #pragma endregion
 };

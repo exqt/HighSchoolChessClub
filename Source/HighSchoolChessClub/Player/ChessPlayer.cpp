@@ -15,7 +15,7 @@
 
 AChessPlayer::AChessPlayer()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Scene Root"));
 	SetRootComponent(SceneRoot);
@@ -37,6 +37,12 @@ void AChessPlayer::BeginPlay()
 	InitialChairCameraRelativeRotation = ChairCamera->GetRelativeRotation();
 }
 
+void AChessPlayer::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	TickCamera(DeltaTime);
+}
+
 bool AChessPlayer::EnterPlayer(AFirstPersonPlayer* InExplorationPawn)
 {
 	if (!IsValid(InExplorationPawn) || IsValid(ExplorationPawn))
@@ -53,6 +59,7 @@ bool AChessPlayer::EnterPlayer(AFirstPersonPlayer* InExplorationPawn)
 	ChairCamera->SetRelativeRotation(InitialChairCameraRelativeRotation);
 
 	const FRotator ChairViewRotation = ChairCamera->GetComponentRotation();
+	InitialViewRotation = ChairViewRotation;
 	ExplorationPawn = InExplorationPawn;
 
 	InExplorationPawn->GetCharacterMovement()->StopMovementImmediately();
@@ -140,11 +147,23 @@ void AChessPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	{
 		EnhancedInput->BindAction(LookAction, ETriggerEvent::Triggered, this, &AChessPlayer::LookInput);
 		EnhancedInput->BindAction(CursorMoveAction, ETriggerEvent::Started, this, &AChessPlayer::CursorMoveInput);
+		
+		EnhancedInput->BindAction(LookHoldAction, ETriggerEvent::Started, this, &AChessPlayer::LookHoldStarted);
+		EnhancedInput->BindAction(LookHoldAction, ETriggerEvent::Completed, this, &AChessPlayer::LookHoldEnded);
+		EnhancedInput->BindAction(LookHoldAction, ETriggerEvent::Canceled, this, &AChessPlayer::LookHoldEnded);
+		
+		EnhancedInput->BindAction(JoystickLookAction, ETriggerEvent::Started, this, &AChessPlayer::StickLookStarted);
+		EnhancedInput->BindAction(JoystickLookAction, ETriggerEvent::Triggered, this, &AChessPlayer::StickLookInput);
+		EnhancedInput->BindAction(JoystickLookAction, ETriggerEvent::Completed, this, &AChessPlayer::StickLookEnded);
+		EnhancedInput->BindAction(JoystickLookAction, ETriggerEvent::Canceled, this, &AChessPlayer::StickLookEnded);
+		
 	}
 }
 
 void AChessPlayer::LookInput(const FInputActionValue& Value)
 {
+	if (!bLookHold) return;	
+	
 	const FVector2D LookAxis = Value.Get<FVector2D>();
 	AddControllerYawInput(LookAxis.X);
 	AddControllerPitchInput(LookAxis.Y);
@@ -185,6 +204,58 @@ FIntPoint AChessPlayer::ConvertInputToBoardDelta(const FIntPoint InputDelta) con
 	}
 
 	return InputDelta;
+}
+
+void AChessPlayer::LookHoldStarted(const FInputActionValue& InputActionValue)
+{
+	bLookHold = true;
+}
+
+void AChessPlayer::LookHoldEnded(const FInputActionValue& InputActionValue)
+{
+	bLookHold = false;
+}
+
+void AChessPlayer::TickCamera(float DeltaTime)
+{
+	if (bLookHold || bStickLookActive) return;
+
+	AController* PlayerController = GetController();
+	if (!PlayerController) return;
+
+	const float ViewReturnInterpSpeed = 5.0f;
+	
+	const FRotator CurrentRotation = PlayerController->GetControlRotation();
+	const FRotator NewRotation = FMath::RInterpTo(
+		CurrentRotation,
+		InitialViewRotation,
+		DeltaTime,
+		ViewReturnInterpSpeed);
+
+	PlayerController->SetControlRotation(NewRotation);
+
+	if (NewRotation.Equals(InitialViewRotation, 0.1f))
+	{
+		PlayerController->SetControlRotation(InitialViewRotation);
+	}
+}
+
+void AChessPlayer::StickLookStarted(const FInputActionValue& InputActionValue)
+{
+	bStickLookActive = true;
+}
+
+void AChessPlayer::StickLookInput(const FInputActionValue& InputActionValue)
+{
+    const FVector2D LookAxis = InputActionValue.Get<FVector2D>();
+
+    AddControllerYawInput(LookAxis.X);
+    AddControllerPitchInput(LookAxis.Y);
+}
+
+void AChessPlayer::StickLookEnded(const FInputActionValue& InputActionValue)
+{
+	bStickLookActive = false;
 }
 
 bool AChessPlayer::CanInteract_Implementation(APawn* Interactor)
