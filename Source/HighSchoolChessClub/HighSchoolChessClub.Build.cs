@@ -22,7 +22,8 @@ public class HighSchoolChessClub : ModuleRules
 			"EnhancedInput",
 			"CommonUI",
 			"GameplayTags",
-			"UMG"
+			"UMG",
+			"ChessCore"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]

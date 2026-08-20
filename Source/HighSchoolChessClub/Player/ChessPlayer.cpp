@@ -173,8 +173,18 @@ void AChessPlayer::CursorMoveInput(const FInputActionValue& Value)
 
 	if (Delta != FIntPoint::ZeroValue)
 	{
-		ChessDesk->MoveCursor(Delta);
+		ChessDesk->MoveCursor(ConvertInputToBoardDelta(Delta));
 	}
+}
+
+FIntPoint AChessPlayer::ConvertInputToBoardDelta(const FIntPoint InputDelta) const
+{
+	if (PlayerPosition == EChessPlayerPosition::PlayerB)
+	{
+		return FIntPoint(-InputDelta.X, -InputDelta.Y);
+	}
+
+	return InputDelta;
 }
 
 bool AChessPlayer::CanInteract_Implementation(APawn* Interactor)

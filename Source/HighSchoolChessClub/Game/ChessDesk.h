@@ -1,9 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ChessCoreTypes.h"
 #include "GameFramework/Actor.h"
 #include "ChessDesk.generated.h"
 
+class AChessPiece;
 class USceneComponent;
 class UStaticMeshComponent;
 
@@ -41,7 +43,17 @@ protected:
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Chess Desk|Cursor")
 	FIntPoint CursorSquare = FIntPoint::ZeroValue;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Chess Desk")
+	TMap<EChessCorePieceType, TSoftClassPtr<AChessPiece>> ChessPieceClasses;
+	
+	UFUNCTION(BlueprintCallable, Category = "Chess Desk")
+	void SetupInitialPosition();
+	
 
 private:
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<AChessPiece>> PieceActors;
+	
 	void RefreshCursorTransform();
 };

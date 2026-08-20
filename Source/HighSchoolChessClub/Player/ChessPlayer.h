@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "Game/ChessParticipant.h"
 #include "Game/Interactable.h"
 #include "ChessPlayer.generated.h"
 
@@ -51,7 +52,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
-	
+
 #pragma region Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Chess Player")
 	TObjectPtr<USceneComponent> SceneRoot;
@@ -69,11 +70,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chess Player|Camera", meta=(ClampMin="0.0", ClampMax="180.0"))
 	float MaxViewYaw = 60.0f;
 
-	/** Minimum pitch offset from the chair's initial view. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chess Player|Camera", meta=(ClampMin="-89.0", ClampMax="89.0"))
 	float MinViewPitch = -35.0f;
 
-	/** Maximum pitch offset from the chair's initial view. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chess Player|Camera", meta=(ClampMin="-89.0", ClampMax="89.0"))
 	float MaxViewPitch = 25.0f;
 
@@ -82,6 +81,7 @@ private:
 	void EndPlayerView(APlayerController* PlayerController);
 	void LookInput(const FInputActionValue& Value);
 	void CursorMoveInput(const FInputActionValue& Value);
+	FIntPoint ConvertInputToBoardDelta(FIntPoint InputDelta) const;
 
 	UPROPERTY(Transient)
 	TObjectPtr<AFirstPersonPlayer> ExplorationPawn;
@@ -89,24 +89,25 @@ private:
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Player|Chess", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<AChessDesk> ChessDesk;
 
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Player|Chess", meta=(AllowPrivateAccess="true"))
+	EChessPlayerPosition PlayerPosition = EChessPlayerPosition::PlayerA;
+
 	TWeakObjectPtr<APlayerController> ViewingController;
 	FRotator InitialChairCameraRelativeRotation = FRotator::ZeroRotator;
 	float PreviousViewYawMin = 0.0f;
 	float PreviousViewYawMax = 0.0f;
 	float PreviousViewPitchMin = 0.0f;
 	float PreviousViewPitchMax = 0.0f;
-	
+
 	float CameraBlendTime = 1.0f;
-	
+
 #pragma region Input Bindings
 	UPROPERTY(EditAnywhere, Category ="Input")
 	class UInputAction* LookAction;
 
-	/** A 2D axis action. IA_Move can be reused here. */
 	UPROPERTY(EditAnywhere, Category ="Input")
 	TObjectPtr<UInputAction> CursorMoveAction;
 
-	/** Each stick axis must reach this value before it becomes -1 or 1. */
 	UPROPERTY(EditAnywhere, Category ="Input", meta=(ClampMin="0.0", ClampMax="1.0"))
 	float CursorMoveThreshold = 0.5f;
 #pragma endregion
