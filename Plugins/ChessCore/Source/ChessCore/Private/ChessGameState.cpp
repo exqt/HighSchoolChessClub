@@ -79,11 +79,15 @@ namespace
 
 	FChessCoreMove FromLibraryMove(const chess::Move& Move, const chess::Board& Board)
 	{
+		const std::string Uci = chess::uci::moveToUci(Move);
+
 		FChessCoreMove Result;
 		Result.From = FromLibrarySquare(Move.from());
-		Result.To = FromLibrarySquare(Move.to());
+		Result.To = Uci.length() >= 4
+			? FromLibrarySquare(chess::Square(std::string_view(Uci).substr(2, 2)))
+			: FromLibrarySquare(Move.to());
 		Result.Promotion = Move.typeOf() == chess::Move::PROMOTION ? FromLibraryPieceType(Move.promotionType()) : EChessCorePieceType::None;
-		Result.Uci = UTF8_TO_TCHAR(chess::uci::moveToUci(Move, Board.chess960()).c_str());
+		Result.Uci = UTF8_TO_TCHAR(Uci.c_str());
 		return Result;
 	}
 

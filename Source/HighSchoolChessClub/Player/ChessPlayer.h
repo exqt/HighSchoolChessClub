@@ -89,6 +89,8 @@ private:
 	void StickLookStarted(const FInputActionValue& InputActionValue);
 	void StickLookInput(const FInputActionValue& InputActionValue);
 	void StickLookEnded(const FInputActionValue& InputActionValue);
+	void SelectInput(const FInputActionValue& InputActionValue);
+	void CancelInput(const FInputActionValue& InputActionValue);
 #pragma endregion
 	
 #pragma region Cursor Movement
@@ -132,5 +134,11 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category ="Input")
 	TObjectPtr<UInputAction> JoystickLookAction;
+
+	UPROPERTY(EditAnywhere, Category ="Input")
+	TObjectPtr<UInputAction> SelectAction;
+
+	UPROPERTY(EditAnywhere, Category ="Input")
+	TObjectPtr<UInputAction> CancelAction;
 #pragma endregion
 };

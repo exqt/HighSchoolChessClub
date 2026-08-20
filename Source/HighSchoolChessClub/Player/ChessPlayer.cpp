@@ -70,6 +70,10 @@ bool AChessPlayer::EnterPlayer(AFirstPersonPlayer* InExplorationPawn)
 
 	BeginPlayerView(PlayerController);
 	PlayerController->SetViewTargetWithBlend(this, CameraBlendTime, VTBlend_EaseInOut, 2.0f, true);
+	if (ChessDesk)
+	{
+		ChessDesk->BeginPlayerControl(PlayerPosition);
+	}
 
 	return true;
 }
@@ -92,6 +96,10 @@ void AChessPlayer::ReturnToExploration()
 	}
 
 	EndPlayerView(PlayerController);
+	if (ChessDesk)
+	{
+		ChessDesk->EndPlayerControl(PlayerPosition);
+	}
 
 	PlayerController->SetViewTarget(PreviousViewTarget);
 
@@ -147,23 +155,25 @@ void AChessPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	{
 		EnhancedInput->BindAction(LookAction, ETriggerEvent::Triggered, this, &AChessPlayer::LookInput);
 		EnhancedInput->BindAction(CursorMoveAction, ETriggerEvent::Started, this, &AChessPlayer::CursorMoveInput);
-		
+
 		EnhancedInput->BindAction(LookHoldAction, ETriggerEvent::Started, this, &AChessPlayer::LookHoldStarted);
 		EnhancedInput->BindAction(LookHoldAction, ETriggerEvent::Completed, this, &AChessPlayer::LookHoldEnded);
 		EnhancedInput->BindAction(LookHoldAction, ETriggerEvent::Canceled, this, &AChessPlayer::LookHoldEnded);
-		
+
 		EnhancedInput->BindAction(JoystickLookAction, ETriggerEvent::Started, this, &AChessPlayer::StickLookStarted);
 		EnhancedInput->BindAction(JoystickLookAction, ETriggerEvent::Triggered, this, &AChessPlayer::StickLookInput);
 		EnhancedInput->BindAction(JoystickLookAction, ETriggerEvent::Completed, this, &AChessPlayer::StickLookEnded);
 		EnhancedInput->BindAction(JoystickLookAction, ETriggerEvent::Canceled, this, &AChessPlayer::StickLookEnded);
-		
+
+		EnhancedInput->BindAction(SelectAction, ETriggerEvent::Started, this, &AChessPlayer::SelectInput);
+		EnhancedInput->BindAction(CancelAction, ETriggerEvent::Started, this, &AChessPlayer::CancelInput);
 	}
 }
 
 void AChessPlayer::LookInput(const FInputActionValue& Value)
 {
-	if (!bLookHold) return;	
-	
+	if (!bLookHold) return;
+
 	const FVector2D LookAxis = Value.Get<FVector2D>();
 	AddControllerYawInput(LookAxis.X);
 	AddControllerPitchInput(LookAxis.Y);
@@ -192,7 +202,7 @@ void AChessPlayer::CursorMoveInput(const FInputActionValue& Value)
 
 	if (Delta != FIntPoint::ZeroValue)
 	{
-		ChessDesk->MoveCursor(ConvertInputToBoardDelta(Delta));
+		ChessDesk->MoveCursor(ConvertInputToBoardDelta(Delta), PlayerPosition);
 	}
 }
 
@@ -224,7 +234,7 @@ void AChessPlayer::TickCamera(float DeltaTime)
 	if (!PlayerController) return;
 
 	const float ViewReturnInterpSpeed = 5.0f;
-	
+
 	const FRotator CurrentRotation = PlayerController->GetControlRotation();
 	const FRotator NewRotation = FMath::RInterpTo(
 		CurrentRotation,
@@ -256,6 +266,16 @@ void AChessPlayer::StickLookInput(const FInputActionValue& InputActionValue)
 void AChessPlayer::StickLookEnded(const FInputActionValue& InputActionValue)
 {
 	bStickLookActive = false;
+}
+
+void AChessPlayer::SelectInput(const FInputActionValue& InputActionValue)
+{
+	ChessDesk->SelectCurrentSquare(PlayerPosition);
+}
+
+void AChessPlayer::CancelInput(const FInputActionValue& InputActionValue)
+{
+	ChessDesk->CancelSelection();
 }
 
 bool AChessPlayer::CanInteract_Implementation(APawn* Interactor)

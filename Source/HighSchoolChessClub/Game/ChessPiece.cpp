@@ -2,19 +2,26 @@
 
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Game/PositionTweenComponent.h"
 #include "Materials/MaterialInterface.h"
 
 AChessPiece::AChessPiece()
 {
-	PrimaryActorTick.bCanEverTick = false;
-
 	SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Scene Root"));
 	SetRootComponent(SceneRoot);
 
 	PieceMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Piece Mesh"));
 	PieceMesh->SetupAttachment(SceneRoot);
 
+	PositionTween = CreateDefaultSubobject<UPositionTweenComponent>(TEXT("Position Tween"));
+
 	MaterialIndices.Add(0);
+}
+
+void AChessPiece::BeginPlay()
+{
+	Super::BeginPlay();
+	RestingWorldPosition = GetActorLocation();
 }
 
 void AChessPiece::OnConstruction(const FTransform& Transform)
@@ -27,6 +34,37 @@ void AChessPiece::SetPieceColor(const EChessCorePieceColor NewColor)
 {
 	PieceColor = NewColor;
 	ApplyPieceColor();
+}
+
+void AChessPiece::LiftPiece()
+{
+	if (bIsLifted)
+	{
+		return;
+	}
+
+	bIsLifted = true;
+	PositionTween->TweenToPosition(
+		RestingWorldPosition + GetActorUpVector() * SelectionLiftHeight,
+		SelectionTweenDuration);
+}
+
+void AChessPiece::LowerPiece()
+{
+	if (!bIsLifted)
+	{
+		return;
+	}
+
+	bIsLifted = false;
+	PositionTween->TweenToPosition(RestingWorldPosition, SelectionTweenDuration);
+}
+
+void AChessPiece::MovePieceTo(const FVector TargetWorldPosition)
+{
+	RestingWorldPosition = TargetWorldPosition;
+	bIsLifted = false;
+	PositionTween->TweenToPosition(RestingWorldPosition, MoveTweenDuration);
 }
 
 void AChessPiece::ApplyPieceColor()
