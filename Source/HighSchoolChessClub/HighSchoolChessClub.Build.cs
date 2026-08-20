@@ -23,7 +23,8 @@ public class HighSchoolChessClub : ModuleRules
 			"CommonUI",
 			"GameplayTags",
 			"UMG",
-			"ChessCore"
+			"ChessCore",
+			"ChessBots"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]
