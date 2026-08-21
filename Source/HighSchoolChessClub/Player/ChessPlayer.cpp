@@ -2,6 +2,7 @@
 
 #include "Camera/CameraComponent.h"
 #include "Camera/PlayerCameraManager.h"
+#include "CommonInputSubsystem.h"
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "EnhancedInputComponent.h"
@@ -9,6 +10,8 @@
 #include "GameFramework/PlayerController.h"
 #include "InputAction.h"
 #include "InputActionValue.h"
+#include "InputCoreTypes.h"
+#include "Game/ChessDesk.h"
 #include "Game/ChessHumanParticipant.h"
 #include "Game/ChessMatch.h"
 #include "Player/FirstPersonPlayer.h"
@@ -118,6 +121,10 @@ void AChessPlayer::ReturnToExploration()
 void AChessPlayer::BeginPlayerView(APlayerController* PlayerController)
 {
 	ViewingController = PlayerController;
+	bPreviousShowMouseCursor = PlayerController->bShowMouseCursor;
+	CommonInputSubsystem = UCommonInputSubsystem::Get(PlayerController->GetLocalPlayer());
+	CommonInputSubsystem->OnInputMethodChangedNative.AddUObject(this, &AChessPlayer::HandleInputMethodChanged);
+	HandleInputMethodChanged(CommonInputSubsystem->GetCurrentInputType());
 
 	if (APlayerCameraManager* CameraManager = PlayerController->PlayerCameraManager)
 	{
@@ -149,6 +156,10 @@ void AChessPlayer::EndPlayerView(APlayerController* PlayerController)
 		CameraManager->ViewPitchMax = PreviousViewPitchMax;
 	}
 
+	CommonInputSubsystem->OnInputMethodChangedNative.RemoveAll(this);
+	CommonInputSubsystem = nullptr;
+	PlayerController->bShowMouseCursor = bPreviousShowMouseCursor;
+	PlayerController->SetInputMode(FInputModeGameOnly());
 	ViewingController.Reset();
 }
 
@@ -277,6 +288,11 @@ void AChessPlayer::SelectInput(const FInputActionValue& InputActionValue)
 {
 	if (HumanParticipant)
 	{
+		APlayerController* PlayerController = Cast<APlayerController>(GetController());
+		if (PlayerController && PlayerController->IsInputKeyDown(EKeys::LeftMouseButton))
+		{
+			UpdateCursorFromMouse();
+		}
 		HumanParticipant->SelectCurrentSquare();
 	}
 }
@@ -286,6 +302,42 @@ void AChessPlayer::CancelInput(const FInputActionValue& InputActionValue)
 	if (HumanParticipant)
 	{
 		HumanParticipant->CancelSelection();
+	}
+}
+
+bool AChessPlayer::UpdateCursorFromMouse() const
+{
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	FVector RayOrigin;
+	FVector RayDirection;
+	if (!PlayerController->DeprojectMousePositionToWorld(RayOrigin, RayDirection))
+	{
+		return false;
+	}
+
+	FIntPoint Square;
+	AChessDesk* Desk = ChessMatch->GetDesk();
+	return Desk->ProjectRayToSquare(RayOrigin, RayDirection, Square)
+		&& HumanParticipant->SetCursorSquare(Square);
+}
+
+void AChessPlayer::HandleInputMethodChanged(const ECommonInputType InputType)
+{
+	const bool bUsingPointerInput = InputType != ECommonInputType::Gamepad;
+	HumanParticipant->SetUsingPointerInput(bUsingPointerInput);
+
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	PlayerController->bShowMouseCursor = bUsingPointerInput;
+	if (bUsingPointerInput)
+	{
+		FInputModeGameAndUI InputMode;
+		InputMode.SetHideCursorDuringCapture(false);
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		PlayerController->SetInputMode(InputMode);
+	}
+	else
+	{
+		PlayerController->SetInputMode(FInputModeGameOnly());
 	}
 }
 

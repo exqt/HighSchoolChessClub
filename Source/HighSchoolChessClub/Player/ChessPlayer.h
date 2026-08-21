@@ -10,12 +10,14 @@ class AFirstPersonPlayer;
 class AChessMatch;
 class APlayerController;
 class UChessHumanParticipant;
+class UCommonInputSubsystem;
 class UCameraComponent;
 class UInputAction;
 class USceneComponent;
 class UStaticMeshComponent;
 struct FInputActionValue;
 struct FMinimalViewInfo;
+enum class ECommonInputType : uint8;
 
 UENUM(BlueprintType)
 enum class EChessPlayerMode : uint8
@@ -92,6 +94,8 @@ private:
 	void StickLookEnded(const FInputActionValue& InputActionValue);
 	void SelectInput(const FInputActionValue& InputActionValue);
 	void CancelInput(const FInputActionValue& InputActionValue);
+	bool UpdateCursorFromMouse() const;
+	void HandleInputMethodChanged(ECommonInputType InputType);
 #pragma endregion
 	
 #pragma region Cursor Movement
@@ -104,6 +108,9 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UChessHumanParticipant> HumanParticipant;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UCommonInputSubsystem> CommonInputSubsystem;
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Player|Chess", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<AChessMatch> ChessMatch;
@@ -118,6 +125,7 @@ private:
 	float PreviousViewYawMax = 0.0f;
 	float PreviousViewPitchMin = 0.0f;
 	float PreviousViewPitchMax = 0.0f;
+	bool bPreviousShowMouseCursor = false;
 
 	float CameraBlendTime = 1.0f;
 	bool bLookHold = false;

@@ -38,6 +38,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Chess Desk|Cursor")
 	void SetCursorVisible(bool bVisible);
+
+	bool ProjectRayToSquare(const FVector& RayOrigin, const FVector& RayDirection, FIntPoint& OutSquare) const;
+	bool WorldLocationToSquare(const FVector& WorldLocation, FIntPoint& OutSquare) const;
 #pragma endregion
 
 	void ShowPieceSelection(FIntPoint Square, const TArray<FIntPoint>& LegalDestinations);

@@ -18,8 +18,10 @@ public:
 	void DetachInputSource(AActor* InInputSource);
 
 	bool MoveCursor(FIntPoint Delta);
+	bool SetCursorSquare(FIntPoint Square);
 	bool SelectCurrentSquare();
 	void CancelSelection();
+	void SetUsingPointerInput(bool bInUsingPointerInput);
 
 private:
 	UPROPERTY(Transient)
@@ -28,6 +30,7 @@ private:
 	TWeakObjectPtr<AActor> InputSource;
 	FIntPoint SelectedSquare = FIntPoint::ZeroValue;
 	bool bHasSelectedSquare = false;
+	bool bUsingPointerInput = false;
 
 	bool CanAcceptInput() const;
 	bool SelectPieceAtCursor();

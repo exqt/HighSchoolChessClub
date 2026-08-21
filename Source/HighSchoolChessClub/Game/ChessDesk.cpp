@@ -63,6 +63,37 @@ void AChessDesk::SetCursorVisible(const bool bVisible)
 	CursorMesh->SetHiddenInGame(!bVisible);
 }
 
+bool AChessDesk::ProjectRayToSquare(
+	const FVector& RayOrigin,
+	const FVector& RayDirection,
+	FIntPoint& OutSquare) const
+{
+	const FVector BoardNormal = BoardOrigin->GetUpVector();
+	const float Denominator = FVector::DotProduct(RayDirection, BoardNormal);
+	if (FMath::IsNearlyZero(Denominator))
+	{
+		return false;
+	}
+
+	const float Distance = FVector::DotProduct(
+		BoardOrigin->GetComponentLocation() - RayOrigin,
+		BoardNormal) / Denominator;
+	if (Distance < 0.0f)
+	{
+		return false;
+	}
+
+	return WorldLocationToSquare(RayOrigin + RayDirection * Distance, OutSquare);
+}
+
+bool AChessDesk::WorldLocationToSquare(const FVector& WorldLocation, FIntPoint& OutSquare) const
+{
+	const FVector LocalLocation = BoardOrigin->GetComponentTransform().InverseTransformPosition(WorldLocation);
+	OutSquare.X = FMath::RoundToInt(LocalLocation.X / SquareSize);
+	OutSquare.Y = FMath::RoundToInt(-LocalLocation.Y / SquareSize);
+	return OutSquare.X >= 0 && OutSquare.X < 8 && OutSquare.Y >= 0 && OutSquare.Y < 8;
+}
+
 void AChessDesk::ShowPieceSelection(const FIntPoint Square, const TArray<FIntPoint>& LegalDestinations)
 {
 	if (AChessPiece* PieceActor = PieceActorsBySquare.FindRef(Square))

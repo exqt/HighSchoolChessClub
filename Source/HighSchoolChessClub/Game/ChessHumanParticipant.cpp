@@ -39,6 +39,11 @@ bool UChessHumanParticipant::MoveCursor(const FIntPoint Delta)
 	return CanAcceptInput() && Match->GetDesk()->MoveCursor(Delta);
 }
 
+bool UChessHumanParticipant::SetCursorSquare(const FIntPoint Square)
+{
+	return CanAcceptInput() && Match->GetDesk()->SetCursorSquare(Square);
+}
+
 bool UChessHumanParticipant::SelectCurrentSquare()
 {
 	if (!CanAcceptInput())
@@ -102,6 +107,12 @@ void UChessHumanParticipant::CancelSelection()
 	SelectedLegalMoves.Reset();
 }
 
+void UChessHumanParticipant::SetUsingPointerInput(const bool bInUsingPointerInput)
+{
+	bUsingPointerInput = bInUsingPointerInput;
+	RefreshCursorVisibility();
+}
+
 bool UChessHumanParticipant::CanAcceptInput() const
 {
 	return bIsTurnActive && InputSource.IsValid() && Match->GetDesk();
@@ -143,6 +154,6 @@ void UChessHumanParticipant::RefreshCursorVisibility() const
 {
 	if (Match->GetDesk())
 	{
-		Match->GetDesk()->SetCursorVisible(CanAcceptInput());
+		Match->GetDesk()->SetCursorVisible(CanAcceptInput() && !bUsingPointerInput);
 	}
 }

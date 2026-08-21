@@ -33,6 +33,7 @@ public class HighSchoolChessClub : ModuleRules
 			"MoviePlayer",
 			"Slate",
 			"SlateCore", 
+			"CommonInput",
 			"GameSettings",
 			"AudioMixer",
 			"AudioModulation",
