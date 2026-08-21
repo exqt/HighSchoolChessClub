@@ -1,49 +1,37 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/Interface.h"
+#include "Game/ChessParticipantTypes.h"
+#include "UObject/Object.h"
 #include "ChessParticipant.generated.h"
 
-class AActor;
-class AChessDesk;
+class AChessMatch;
 
-UENUM(BlueprintType)
-enum class EChessPlayerPosition : uint8
-{
-	PlayerA,
-	PlayerB
-};
-
-USTRUCT(BlueprintType)
-struct HIGHSCHOOLCHESSCLUB_API FChessMoveAnimationData
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadOnly, Category="Chess")
-	FIntPoint FromSquare = FIntPoint::ZeroValue;
-
-	UPROPERTY(BlueprintReadOnly, Category="Chess")
-	FIntPoint ToSquare = FIntPoint::ZeroValue;
-
-	UPROPERTY(BlueprintReadOnly, Category="Chess")
-	TObjectPtr<AActor> PieceActor = nullptr;
-
-	UPROPERTY(BlueprintReadOnly, Category="Chess")
-	FVector FromWS = FVector::ZeroVector;
-
-	UPROPERTY(BlueprintReadOnly, Category="Chess")
-	FVector ToWS = FVector::ZeroVector;
-};
-
-UINTERFACE(BlueprintType)
-class HIGHSCHOOLCHESSCLUB_API UChessParticipant : public UInterface
-{
-	GENERATED_BODY()
-};
-
-class HIGHSCHOOLCHESSCLUB_API IChessParticipant
+UCLASS(Abstract, BlueprintType, Blueprintable)
+class HIGHSCHOOLCHESSCLUB_API UChessParticipant : public UObject
 {
 	GENERATED_BODY()
 
 public:
+	void Initialize(AChessMatch* InMatch, EChessPlayerPosition InPosition, AActor* InPerformer);
+
+	virtual void BeginTurn();
+	virtual void EndTurn();
+
+	UFUNCTION(BlueprintPure, Category="Chess Participant")
+	EChessPlayerPosition GetPosition() const { return Position; }
+
+	UFUNCTION(BlueprintPure, Category="Chess Participant")
+	bool IsTurnActive() const { return bIsTurnActive; }
+
+	AChessMatch* GetMatch() const { return Match; }
+	AActor* GetPerformer() const { return Performer.Get(); }
+
+protected:
+	UPROPERTY(Transient)
+	TObjectPtr<AChessMatch> Match;
+
+	TWeakObjectPtr<AActor> Performer;
+	EChessPlayerPosition Position = EChessPlayerPosition::PlayerA;
+	bool bIsTurnActive = false;
 };

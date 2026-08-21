@@ -9,6 +9,7 @@
 #include "GameFramework/PlayerController.h"
 #include "InputAction.h"
 #include "InputActionValue.h"
+#include "Game/ChessHumanParticipant.h"
 #include "Game/ChessMatch.h"
 #include "Player/FirstPersonPlayer.h"
 #include "Player/FirstPersonPlayerController.h"
@@ -50,6 +51,14 @@ bool AChessPlayer::EnterPlayer(AFirstPersonPlayer* InExplorationPawn)
 		return false;
 	}
 
+	UChessHumanParticipant* Participant = ChessMatch
+		? ChessMatch->GetHumanParticipant(PlayerPosition)
+		: nullptr;
+	if (!Participant)
+	{
+		return false;
+	}
+
 	APlayerController* PlayerController = Cast<APlayerController>(InExplorationPawn->GetController());
 	if (!IsValid(PlayerController))
 	{
@@ -61,6 +70,7 @@ bool AChessPlayer::EnterPlayer(AFirstPersonPlayer* InExplorationPawn)
 	const FRotator ChairViewRotation = ChairCamera->GetComponentRotation();
 	InitialViewRotation = ChairViewRotation;
 	ExplorationPawn = InExplorationPawn;
+	HumanParticipant = Participant;
 
 	InExplorationPawn->GetCharacterMovement()->StopMovementImmediately();
 	InExplorationPawn->GetCharacterMovement()->DisableMovement();
@@ -70,10 +80,7 @@ bool AChessPlayer::EnterPlayer(AFirstPersonPlayer* InExplorationPawn)
 
 	BeginPlayerView(PlayerController);
 	PlayerController->SetViewTargetWithBlend(this, CameraBlendTime, VTBlend_EaseInOut, 2.0f, true);
-	if (ChessMatch)
-	{
-		ChessMatch->BeginPlayerControl(PlayerPosition);
-	}
+	HumanParticipant->AttachInputSource(this);
 
 	return true;
 }
@@ -96,10 +103,8 @@ void AChessPlayer::ReturnToExploration()
 	}
 
 	EndPlayerView(PlayerController);
-	if (ChessMatch)
-	{
-		ChessMatch->EndPlayerControl(PlayerPosition);
-	}
+	HumanParticipant->DetachInputSource(this);
+	HumanParticipant = nullptr;
 
 	PlayerController->SetViewTarget(PreviousViewTarget);
 
@@ -181,7 +186,7 @@ void AChessPlayer::LookInput(const FInputActionValue& Value)
 
 void AChessPlayer::CursorMoveInput(const FInputActionValue& Value)
 {
-	if (!IsValid(ChessMatch))
+	if (!HumanParticipant)
 	{
 		return;
 	}
@@ -202,7 +207,7 @@ void AChessPlayer::CursorMoveInput(const FInputActionValue& Value)
 
 	if (Delta != FIntPoint::ZeroValue)
 	{
-		ChessMatch->MoveCursor(ConvertInputToBoardDelta(Delta), PlayerPosition);
+		HumanParticipant->MoveCursor(ConvertInputToBoardDelta(Delta));
 	}
 }
 
@@ -270,17 +275,26 @@ void AChessPlayer::StickLookEnded(const FInputActionValue& InputActionValue)
 
 void AChessPlayer::SelectInput(const FInputActionValue& InputActionValue)
 {
-	ChessMatch->SelectCurrentSquare(PlayerPosition);
+	if (HumanParticipant)
+	{
+		HumanParticipant->SelectCurrentSquare();
+	}
 }
 
 void AChessPlayer::CancelInput(const FInputActionValue& InputActionValue)
 {
-	ChessMatch->CancelSelection();
+	if (HumanParticipant)
+	{
+		HumanParticipant->CancelSelection();
+	}
 }
 
 bool AChessPlayer::CanInteract_Implementation(APawn* Interactor)
 {
-	return IsValid(Cast<AFirstPersonPlayer>(Interactor)) && !IsValid(ExplorationPawn);
+	return IsValid(Cast<AFirstPersonPlayer>(Interactor))
+		&& !IsValid(ExplorationPawn)
+		&& ChessMatch
+		&& ChessMatch->GetHumanParticipant(PlayerPosition);
 }
 
 void AChessPlayer::Interact_Implementation(APawn* Interactor)

@@ -2,12 +2,14 @@
 
 #include "CoreMinimal.h"
 #include "ChessCoreTypes.h"
-#include "Game/ChessParticipant.h"
+#include "Game/ChessParticipantTypes.h"
 #include "GameFramework/Actor.h"
 #include "ChessMatch.generated.h"
 
 class AChessDesk;
 class UChessGameState;
+class UChessHumanParticipant;
+class UChessParticipant;
 
 UCLASS(Blueprintable)
 class HIGHSCHOOLCHESSCLUB_API AChessMatch : public AActor
@@ -17,35 +19,27 @@ class HIGHSCHOOLCHESSCLUB_API AChessMatch : public AActor
 public:
 	AChessMatch();
 
-	UFUNCTION(BlueprintCallable, Category="Chess Match|Cursor")
-	bool MoveCursor(FIntPoint Delta, EChessPlayerPosition PlayerPosition);
+	UFUNCTION(BlueprintPure, Category="Chess Match")
+	AChessDesk* GetDesk() const { return Desk; }
 
-	UFUNCTION(BlueprintCallable, Category="Chess Match|Game")
-	bool SelectCurrentSquare(EChessPlayerPosition PlayerPosition);
+	UFUNCTION(BlueprintPure, Category="Chess Match|Participants")
+	UChessParticipant* GetParticipant(EChessPlayerPosition Position) const;
 
-	UFUNCTION(BlueprintCallable, Category="Chess Match|Game")
-	void CancelSelection();
+	UChessHumanParticipant* GetHumanParticipant(EChessPlayerPosition Position) const;
 
-	void BeginPlayerControl(EChessPlayerPosition PlayerPosition);
-	void EndPlayerControl(EChessPlayerPosition PlayerPosition);
-
-	UFUNCTION(BlueprintPure, Category="Chess Match|Players")
-	bool CanPlayerControl(EChessPlayerPosition PlayerPosition) const;
+	bool TrySubmitMove(UChessParticipant* Participant, const FChessCoreMove& Move);
+	bool TrySubmitMoveUci(UChessParticipant* Participant, const FString& UciMove);
+	void GetLegalMovesFrom(FIntPoint Square, TArray<FChessCoreMove>& OutMoves) const;
+	bool GetPieceAtSquare(FIntPoint Square, FChessCorePiece& OutPiece) const;
 
 	UFUNCTION(BlueprintPure, Category="Chess Match|Game")
-	bool HasSelectedSquare() const { return bHasSelectedSquare; }
-
-	UFUNCTION(BlueprintPure, Category="Chess Match|Game")
-	FIntPoint GetSelectedSquare() const { return SelectedSquare; }
-
-	UFUNCTION(BlueprintPure, Category="Chess Match|Game")
-	TArray<FIntPoint> GetLegalDestinationSquares() const;
+	FString GetFen() const;
 
 	UFUNCTION(BlueprintPure, Category="Chess Match|Game")
 	EChessCorePieceColor GetSideToMove() const;
 
-	UFUNCTION(BlueprintPure, Category="Chess Match|Players")
-	EChessCorePieceColor GetPlayerColor(EChessPlayerPosition PlayerPosition) const;
+	UFUNCTION(BlueprintPure, Category="Chess Match|Participants")
+	EChessCorePieceColor GetPlayerColor(EChessPlayerPosition Position) const;
 
 	UFUNCTION(BlueprintPure, Category="Chess Match|Game")
 	UChessGameState* GetChessState() const { return ChessState; }
@@ -55,12 +49,25 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Match")
 	TObjectPtr<AChessDesk> Desk;
 
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Match|Players")
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Match|Participants")
 	EChessCorePieceColor PlayerAColor = EChessCorePieceColor::White;
+
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Match|Participants")
+	TSubclassOf<UChessParticipant> PlayerAParticipantClass;
+
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Match|Participants")
+	TSubclassOf<UChessParticipant> PlayerBParticipantClass;
+
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Match|Participants")
+	TObjectPtr<AActor> PlayerAPerformer;
+
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Match|Participants")
+	TObjectPtr<AActor> PlayerBPerformer;
 
 	UFUNCTION(BlueprintImplementableEvent, Category="Chess Match|Game")
 	void OnMoveApplied(const FChessCoreMove& Move);
@@ -70,15 +77,13 @@ private:
 	TObjectPtr<UChessGameState> ChessState;
 
 	UPROPERTY(Transient)
-	TArray<FChessCoreMove> SelectedLegalMoves;
+	TObjectPtr<UChessParticipant> PlayerAParticipant;
 
-	FIntPoint SelectedSquare = FIntPoint::ZeroValue;
-	bool bHasSelectedSquare = false;
-	EChessPlayerPosition ActivePlayerPosition = EChessPlayerPosition::PlayerA;
-	bool bHasActivePlayer = false;
+	UPROPERTY(Transient)
+	TObjectPtr<UChessParticipant> PlayerBParticipant;
 
-	bool SelectPieceAtCursor(EChessCorePieceColor PlayerColor);
-	bool GetPieceAtSquare(FIntPoint Square, FChessCorePiece& OutPiece) const;
+	void CreateParticipants();
+	void BeginCurrentTurn();
 	void RebuildDeskFromState();
-	void RefreshCursorVisibility();
+	UChessParticipant* GetParticipantForColor(EChessCorePieceColor Color) const;
 };

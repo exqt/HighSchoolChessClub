@@ -2,13 +2,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
-#include "Game/ChessParticipant.h"
+#include "Game/ChessParticipantTypes.h"
 #include "Game/Interactable.h"
 #include "ChessPlayer.generated.h"
 
 class AFirstPersonPlayer;
 class AChessMatch;
 class APlayerController;
+class UChessHumanParticipant;
 class UCameraComponent;
 class UInputAction;
 class USceneComponent;
@@ -24,7 +25,7 @@ enum class EChessPlayerMode : uint8
 };
 
 UCLASS(Blueprintable)
-class HIGHSCHOOLCHESSCLUB_API AChessPlayer : public APawn, public IInteractable, public IChessParticipant
+class HIGHSCHOOLCHESSCLUB_API AChessPlayer : public APawn, public IInteractable
 {
 	GENERATED_BODY()
 
@@ -100,6 +101,9 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<AFirstPersonPlayer> ExplorationPawn;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UChessHumanParticipant> HumanParticipant;
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Player|Chess", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<AChessMatch> ChessMatch;
