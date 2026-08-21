@@ -1,13 +1,15 @@
 #include "Game/ChessMatch.h"
 
 #include "ChessGameState.h"
+#include "Game/ChessClockComponent.h"
 #include "Game/ChessDesk.h"
 #include "Game/ChessHumanParticipant.h"
 #include "Game/ChessParticipant.h"
 
 AChessMatch::AChessMatch()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
+	ChessClock = CreateDefaultSubobject<UChessClockComponent>(TEXT("Chess Clock"));
 	PlayerAParticipantClass = UChessHumanParticipant::StaticClass();
 	PlayerBParticipantClass = UChessHumanParticipant::StaticClass();
 }
