@@ -9,7 +9,7 @@
 #include "GameFramework/PlayerController.h"
 #include "InputAction.h"
 #include "InputActionValue.h"
-#include "Game/ChessDesk.h"
+#include "Game/ChessMatch.h"
 #include "Player/FirstPersonPlayer.h"
 #include "Player/FirstPersonPlayerController.h"
 
@@ -70,9 +70,9 @@ bool AChessPlayer::EnterPlayer(AFirstPersonPlayer* InExplorationPawn)
 
 	BeginPlayerView(PlayerController);
 	PlayerController->SetViewTargetWithBlend(this, CameraBlendTime, VTBlend_EaseInOut, 2.0f, true);
-	if (ChessDesk)
+	if (ChessMatch)
 	{
-		ChessDesk->BeginPlayerControl(PlayerPosition);
+		ChessMatch->BeginPlayerControl(PlayerPosition);
 	}
 
 	return true;
@@ -96,9 +96,9 @@ void AChessPlayer::ReturnToExploration()
 	}
 
 	EndPlayerView(PlayerController);
-	if (ChessDesk)
+	if (ChessMatch)
 	{
-		ChessDesk->EndPlayerControl(PlayerPosition);
+		ChessMatch->EndPlayerControl(PlayerPosition);
 	}
 
 	PlayerController->SetViewTarget(PreviousViewTarget);
@@ -181,7 +181,7 @@ void AChessPlayer::LookInput(const FInputActionValue& Value)
 
 void AChessPlayer::CursorMoveInput(const FInputActionValue& Value)
 {
-	if (!IsValid(ChessDesk))
+	if (!IsValid(ChessMatch))
 	{
 		return;
 	}
@@ -202,7 +202,7 @@ void AChessPlayer::CursorMoveInput(const FInputActionValue& Value)
 
 	if (Delta != FIntPoint::ZeroValue)
 	{
-		ChessDesk->MoveCursor(ConvertInputToBoardDelta(Delta), PlayerPosition);
+		ChessMatch->MoveCursor(ConvertInputToBoardDelta(Delta), PlayerPosition);
 	}
 }
 
@@ -270,12 +270,12 @@ void AChessPlayer::StickLookEnded(const FInputActionValue& InputActionValue)
 
 void AChessPlayer::SelectInput(const FInputActionValue& InputActionValue)
 {
-	ChessDesk->SelectCurrentSquare(PlayerPosition);
+	ChessMatch->SelectCurrentSquare(PlayerPosition);
 }
 
 void AChessPlayer::CancelInput(const FInputActionValue& InputActionValue)
 {
-	ChessDesk->CancelSelection();
+	ChessMatch->CancelSelection();
 }
 
 bool AChessPlayer::CanInteract_Implementation(APawn* Interactor)

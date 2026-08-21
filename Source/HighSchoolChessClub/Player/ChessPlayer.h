@@ -7,7 +7,7 @@
 #include "ChessPlayer.generated.h"
 
 class AFirstPersonPlayer;
-class AChessDesk;
+class AChessMatch;
 class APlayerController;
 class UCameraComponent;
 class UInputAction;
@@ -38,10 +38,10 @@ public:
 	void ReturnToExploration();
 
 	UFUNCTION(BlueprintCallable, Category="Chess Player|Chess")
-	void SetChessDesk(AChessDesk* InChessDesk) { ChessDesk = InChessDesk; }
+	void SetChessMatch(AChessMatch* InChessMatch) { ChessMatch = InChessMatch; }
 
 	UFUNCTION(BlueprintPure, Category="Chess Player|Chess")
-	AChessDesk* GetChessDesk() const { return ChessDesk; }
+	AChessMatch* GetChessMatch() const { return ChessMatch; }
 
 	virtual bool CanInteract_Implementation(APawn* Interactor) override;
 	virtual void Interact_Implementation(APawn* Interactor) override;
@@ -102,7 +102,7 @@ private:
 	TObjectPtr<AFirstPersonPlayer> ExplorationPawn;
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Player|Chess", meta=(AllowPrivateAccess="true"))
-	TObjectPtr<AChessDesk> ChessDesk;
+	TObjectPtr<AChessMatch> ChessMatch;
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Player|Chess", meta=(AllowPrivateAccess="true"))
 	EChessPlayerPosition PlayerPosition = EChessPlayerPosition::PlayerA;
