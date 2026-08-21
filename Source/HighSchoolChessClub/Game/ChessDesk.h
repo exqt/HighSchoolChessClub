@@ -6,6 +6,7 @@
 #include "ChessDesk.generated.h"
 
 class AChessPiece;
+class UInstancedStaticMeshComponent;
 class USceneComponent;
 class UStaticMeshComponent;
 
@@ -57,6 +58,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Chess Desk")
 	TObjectPtr<USceneComponent> BoardOrigin;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Chess Desk|Highlight")
+	TObjectPtr<UInstancedStaticMeshComponent> LegalMoveCells;
 #pragma endregion
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Desk|Cursor")
@@ -64,6 +68,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Chess Desk")
 	TMap<EChessCorePieceType, TSoftClassPtr<AChessPiece>> ChessPieceClasses;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Chess Desk|Highlight")
+	FVector LegalMoveCellScale = FVector::OneVector;
 
 #pragma region Blueprint Events
 	UFUNCTION(BlueprintImplementableEvent, Category="Chess Desk|Selection")
@@ -78,10 +85,11 @@ private:
 	TMap<FIntPoint, TObjectPtr<AChessPiece>> PieceActorsBySquare;
 
 	void RefreshCursorTransform();
+	void ShowLegalMoveCells(const TArray<FIntPoint>& Squares);
+	void ClearLegalMoveCells();
 	AChessPiece* SpawnPieceActor(const FChessCorePiece& Piece);
 	void MovePieceActorToSquare(AChessPiece* PieceActor, FIntPoint Square) const;
 	void DestroyPieceActorAtSquare(FIntPoint Square);
 
 	const float SquareSize = 5.0f;
-	const float CursorHeight = 1.0f;
 };

@@ -1,6 +1,7 @@
 #include "Game/ChessDesk.h"
 
 #include "Game/ChessPiece.h"
+#include "Components/InstancedStaticMeshComponent.h"
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
@@ -14,6 +15,11 @@ AChessDesk::AChessDesk()
 
 	BoardOrigin = CreateDefaultSubobject<USceneComponent>(TEXT("Board Origin"));
 	BoardOrigin->SetupAttachment(SceneRoot);
+
+	LegalMoveCells = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("Legal Move Cells"));
+	LegalMoveCells->SetupAttachment(BoardOrigin);
+	LegalMoveCells->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	LegalMoveCells->SetGenerateOverlapEvents(false);
 
 	CursorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Cursor Mesh"));
 	CursorMesh->SetupAttachment(BoardOrigin);
@@ -54,7 +60,7 @@ FVector AChessDesk::GetCursorWorldLocation() const
 	const FVector BoardLocation(
 		static_cast<float>(CursorSquare.X) * SquareSize,
 		-static_cast<float>(CursorSquare.Y) * SquareSize,
-		CursorHeight);
+		0.0f);
 	return BoardOrigin->GetComponentTransform().TransformPosition(BoardLocation);
 }
 
@@ -96,6 +102,7 @@ bool AChessDesk::WorldLocationToSquare(const FVector& WorldLocation, FIntPoint& 
 
 void AChessDesk::ShowPieceSelection(const FIntPoint Square, const TArray<FIntPoint>& LegalDestinations)
 {
+	ShowLegalMoveCells(LegalDestinations);
 	if (AChessPiece* PieceActor = PieceActorsBySquare.FindRef(Square))
 	{
 		PieceActor->LiftPiece();
@@ -105,6 +112,7 @@ void AChessDesk::ShowPieceSelection(const FIntPoint Square, const TArray<FIntPoi
 
 void AChessDesk::ClearPieceSelection(const FIntPoint Square)
 {
+	ClearLegalMoveCells();
 	if (AChessPiece* PieceActor = PieceActorsBySquare.FindRef(Square))
 	{
 		PieceActor->LowerPiece();
@@ -114,6 +122,7 @@ void AChessDesk::ClearPieceSelection(const FIntPoint Square)
 
 void AChessDesk::RebuildPieceActors(const TArray<FChessCorePiece>& Pieces)
 {
+	ClearLegalMoveCells();
 	for (const TPair<FIntPoint, TObjectPtr<AChessPiece>>& Entry : PieceActorsBySquare)
 	{
 		if (Entry.Value)
@@ -243,6 +252,24 @@ void AChessDesk::RefreshCursorTransform()
 	const FVector RelativeLocation(
 		static_cast<float>(CursorSquare.X) * SquareSize,
 		-static_cast<float>(CursorSquare.Y) * SquareSize,
-		CursorHeight);
+		0.0f);
 	CursorMesh->SetRelativeLocation(RelativeLocation);
+}
+
+void AChessDesk::ShowLegalMoveCells(const TArray<FIntPoint>& Squares)
+{
+	LegalMoveCells->ClearInstances();
+	for (const FIntPoint Square : Squares)
+	{
+		const FVector Location(
+			static_cast<float>(Square.X) * SquareSize,
+			-static_cast<float>(Square.Y) * SquareSize,
+			0.0f);
+		LegalMoveCells->AddInstance(FTransform(FRotator::ZeroRotator, Location, LegalMoveCellScale));
+	}
+}
+
+void AChessDesk::ClearLegalMoveCells()
+{
+	LegalMoveCells->ClearInstances();
 }
