@@ -23,6 +23,7 @@ enum class EChessMatchState : uint8
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChessMatchStateChanged, EChessMatchState, NewState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChessBoardStateChanged, UChessGameState*, GameState);
 
 UCLASS(Blueprintable)
 class HIGHSCHOOLCHESSCLUB_API AChessMatch : public AActor
@@ -58,6 +59,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Chess Match")
 	void SetupInitialPosition();
+
+	UPROPERTY(BlueprintAssignable, Category="ChessMatch")
+	FOnChessBoardStateChanged OnBoardStateChanged;
 #pragma endregion
 
 #pragma region Participants
@@ -80,6 +84,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category="Chess Match")
 	EChessCorePieceColor GetPlayerColor(EChessPlayerPosition Position) const;
+
+	UFUNCTION(BlueprintPure, Category="ChessMatch")
+	EChessCorePieceColor GetHumanPlayerColor() const;
 #pragma endregion
 
 #pragma region Match

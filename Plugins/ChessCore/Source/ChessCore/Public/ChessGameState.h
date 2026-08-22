@@ -46,9 +46,21 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Chess")
 	bool GetPieces(TArray<FChessCorePiece>& OutPieces) const;
 
+	UFUNCTION(BlueprintCallable, Category="ChessGameState")
+	void GetCapturedPieces(TArray<FChessCorePiece>& OutCapturedPieces) const;
+
+	UFUNCTION(BlueprintCallable, Category="ChessGameState")
+	void GetMoveHistory(TArray<FChessCoreMove>& OutMoveHistory) const;
+
 	UFUNCTION(BlueprintPure, Category="Chess")
 	FChessCoreGameStatus GetGameStatus() const;
 
 private:
+	UPROPERTY(Transient)
+	TArray<FChessCorePiece> CapturedPieces;
+
+	UPROPERTY(Transient)
+	TArray<FChessCoreMove> MoveHistory;
+
 	FChessGameStateImpl* Impl = nullptr;
 };

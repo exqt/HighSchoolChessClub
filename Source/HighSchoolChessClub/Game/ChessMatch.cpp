@@ -164,6 +164,7 @@ bool AChessMatch::TrySubmitMove(UChessParticipant* Participant, const FChessCore
 
 	FChessCorePiece PieceAfterMove;
 	Desk->ApplyMoveToPieceActors(AppliedMove, MovingPiece, PieceAfterMove);
+	OnBoardStateChanged.Broadcast(ChessState);
 
 	Participant->EndTurn();
 	ChessClock->ApplyIncrement(Participant->GetPosition());
@@ -244,6 +245,19 @@ EChessCorePieceColor AChessMatch::GetPlayerColor(const EChessPlayerPosition Posi
 		: EChessCorePieceColor::White;
 }
 
+EChessCorePieceColor AChessMatch::GetHumanPlayerColor() const
+{
+	if (GetHumanParticipant(EChessPlayerPosition::PlayerA))
+	{
+		return GetPlayerColor(EChessPlayerPosition::PlayerA);
+	}
+	if (GetHumanParticipant(EChessPlayerPosition::PlayerB))
+	{
+		return GetPlayerColor(EChessPlayerPosition::PlayerB);
+	}
+	return EChessCorePieceColor::None;
+}
+
 void AChessMatch::SetupInitialPosition()
 {
 	if (PlayerAParticipant)
@@ -257,6 +271,7 @@ void AChessMatch::SetupInitialPosition()
 	ChessState->ResetToStartPosition();
 	ChessClock->ResetClock();
 	RebuildDeskFromState();
+	OnBoardStateChanged.Broadcast(ChessState);
 }
 
 void AChessMatch::HandleTimeExpired(const EChessPlayerPosition Position)

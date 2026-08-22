@@ -199,7 +199,14 @@ bool UChessGameState::SetFen(const FString& Fen)
 	}
 
 	const FTCHARToUTF8 FenUtf8(*Fen);
-	return Impl->Board.setFen(std::string_view(FenUtf8.Get(), FenUtf8.Length()));
+	if (!Impl->Board.setFen(std::string_view(FenUtf8.Get(), FenUtf8.Length())))
+	{
+		return false;
+	}
+
+	CapturedPieces.Reset();
+	MoveHistory.Reset();
+	return true;
 }
 
 FString UChessGameState::GetFen(bool bIncludeMoveCounters) const
@@ -257,7 +264,26 @@ bool UChessGameState::TryMakeMove(const FChessCoreMove& Move, FChessCoreMove& Ap
 	}
 
 	AppliedMove = FromLibraryMove(Candidate, Impl->Board);
-	Impl->Board.makeMove(Candidate);
+	if (Impl->Board.isCapture(Candidate))
+	{
+		const chess::Piece LibraryPiece = Impl->Board.getCapturing<chess::Piece>(Candidate);
+		const chess::Square LibrarySquare = Candidate.typeOf() == chess::Move::ENPASSANT
+			? Candidate.to().ep_square()
+			: Candidate.to();
+
+		FChessCorePiece CapturedPiece;
+		CapturedPiece.Square = FromLibrarySquare(LibrarySquare);
+		CapturedPiece.Type = FromLibraryPieceType(LibraryPiece.type());
+		CapturedPiece.Color = FromLibraryColor(LibraryPiece.color());
+
+		Impl->Board.makeMove(Candidate);
+		CapturedPieces.Add(CapturedPiece);
+	}
+	else
+	{
+		Impl->Board.makeMove(Candidate);
+	}
+	MoveHistory.Add(AppliedMove);
 	return true;
 }
 
@@ -275,7 +301,26 @@ bool UChessGameState::TryMakeMoveUci(const FString& UciMove, FChessCoreMove& App
 	}
 
 	AppliedMove = FromLibraryMove(Move, Impl->Board);
-	Impl->Board.makeMove(Move);
+	if (Impl->Board.isCapture(Move))
+	{
+		const chess::Piece LibraryPiece = Impl->Board.getCapturing<chess::Piece>(Move);
+		const chess::Square LibrarySquare = Move.typeOf() == chess::Move::ENPASSANT
+			? Move.to().ep_square()
+			: Move.to();
+
+		FChessCorePiece CapturedPiece;
+		CapturedPiece.Square = FromLibrarySquare(LibrarySquare);
+		CapturedPiece.Type = FromLibraryPieceType(LibraryPiece.type());
+		CapturedPiece.Color = FromLibraryColor(LibraryPiece.color());
+
+		Impl->Board.makeMove(Move);
+		CapturedPieces.Add(CapturedPiece);
+	}
+	else
+	{
+		Impl->Board.makeMove(Move);
+	}
+	MoveHistory.Add(AppliedMove);
 	return true;
 }
 
@@ -310,6 +355,16 @@ bool UChessGameState::GetPieces(TArray<FChessCorePiece>& OutPieces) const
 	}
 
 	return true;
+}
+
+void UChessGameState::GetCapturedPieces(TArray<FChessCorePiece>& OutCapturedPieces) const
+{
+	OutCapturedPieces = CapturedPieces;
+}
+
+void UChessGameState::GetMoveHistory(TArray<FChessCoreMove>& OutMoveHistory) const
+{
+	OutMoveHistory = MoveHistory;
 }
 
 FChessCoreGameStatus UChessGameState::GetGameStatus() const

@@ -93,7 +93,7 @@ void AChessPlayer::EnterPlayer(AFirstPersonPlayer* InExplorationPawn)
 
 void AChessPlayer::RequestStartMatch()
 {
-	ChessMatch->RequestStartMatch(HumanParticipant);
+	ChessMatch->RequestStartMatch();
 }
 
 void AChessPlayer::UnPossessed()
