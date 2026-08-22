@@ -1,8 +1,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameEnums.h"
 #include "ChessMatchSettings.generated.h"
+
+UENUM(BlueprintType)
+enum class EChessPlayerColor : uint8
+{
+	White,
+	Black,
+	Random
+};
 
 USTRUCT(BlueprintType)
 struct HIGHSCHOOLCHESSCLUB_API FChessMatchSettings

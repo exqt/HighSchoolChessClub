@@ -4,10 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "Game/GameEnums.h"
 #include "FirstPersonPlayerController.generated.h"
 
 class UInputMappingContext;
+
+UENUM(BlueprintType)
+enum class EControlMode : uint8
+{
+	FirstPerson = 0,
+	Chess = 1,
+};
 
 UCLASS()
 class HIGHSCHOOLCHESSCLUB_API AFirstPersonPlayerController : public APlayerController
