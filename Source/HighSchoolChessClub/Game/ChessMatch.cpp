@@ -163,6 +163,7 @@ bool AChessMatch::TrySubmitMove(UChessParticipant* Participant, const FChessCore
 	}
 
 	FChessCorePiece PieceAfterMove;
+	GetPieceAtSquare(FIntPoint(AppliedMove.To.File, AppliedMove.To.Rank), PieceAfterMove);
 	Desk->ApplyMoveToPieceActors(AppliedMove, MovingPiece, PieceAfterMove);
 	OnBoardStateChanged.Broadcast(ChessState);
 
