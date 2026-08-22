@@ -275,6 +275,19 @@ void AChessMatch::SetupInitialPosition()
 	OnBoardStateChanged.Broadcast(ChessState);
 }
 
+bool AChessMatch::SetupPositionFromFen(const FString& Fen)
+{
+	if (MatchState != EChessMatchState::MatchSetup || !ChessState->SetFen(Fen))
+	{
+		return false;
+	}
+
+	ChessClock->ResetClock();
+	RebuildDeskFromState();
+	OnBoardStateChanged.Broadcast(ChessState);
+	return true;
+}
+
 void AChessMatch::HandleTimeExpired(const EChessPlayerPosition Position)
 {
 	FinishMatch();
@@ -308,6 +321,11 @@ void AChessMatch::RefreshParticipantState()
 void AChessMatch::EnterMatchSetup()
 {
 	SetMatchState(EChessMatchState::MatchSetup);
+
+	if (bUseDebugPosition)
+	{
+		SetupPositionFromFen(DebugPositionFen);
+	}
 }
 
 void AChessMatch::FinishMatch()

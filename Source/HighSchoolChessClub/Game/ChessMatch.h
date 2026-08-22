@@ -60,6 +60,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Chess Match")
 	void SetupInitialPosition();
 
+	UFUNCTION(BlueprintCallable, Category="ChessMatch")
+	bool SetupPositionFromFen(const FString& Fen);
+
 	UPROPERTY(BlueprintAssignable, Category="ChessMatch")
 	FOnChessBoardStateChanged OnBoardStateChanged;
 #pragma endregion
@@ -129,6 +132,14 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Chess Match")
 	TObjectPtr<UChessClockComponent> ChessClock;
+#pragma endregion
+
+#pragma region Debug
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ChessMatch")
+	bool bUseDebugPosition = false;
+
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ChessMatch", meta=(EditCondition="bUseDebugPosition"))
+	FString DebugPositionFen = TEXT("8/7Q/2N5/8/8/k1pp4/2qp4/K7 b - - 1 1");
 #pragma endregion
 
 #pragma region Participants
