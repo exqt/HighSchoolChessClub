@@ -35,6 +35,28 @@ void UChessClockComponent::SetActivePlayer(const EChessPlayerPosition Position)
 	ActivePlayer = Position;
 }
 
+void UChessClockComponent::ConfigureClock(const int32 InInitialTime, const int32 InIncrementTime)
+{
+	InitialTime = FMath::Max(0, InInitialTime);
+	IncrementTime = FMath::Max(0, InIncrementTime);
+}
+
+void UChessClockComponent::ApplyIncrement(const EChessPlayerPosition Position)
+{
+	if (IncrementTime <= 0)
+	{
+		return;
+	}
+
+	int32& RemainingTime = Position == EChessPlayerPosition::PlayerA
+		? PlayerARemainingTime
+		: PlayerBRemainingTime;
+	RemainingTime = static_cast<int32>(FMath::Min<int64>(
+		MAX_int32,
+		static_cast<int64>(RemainingTime) + IncrementTime));
+	OnTimeChanged.Broadcast(Position, RemainingTime);
+}
+
 int32 UChessClockComponent::GetRemainingTime(const EChessPlayerPosition Position) const
 {
 	return Position == EChessPlayerPosition::PlayerA

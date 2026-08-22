@@ -35,6 +35,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Chess Clock")
 	void SetActivePlayer(EChessPlayerPosition Position);
 
+	UFUNCTION(BlueprintCallable, Category="Chess Clock")
+	void ConfigureClock(int32 InInitialTime, int32 InIncrementTime);
+
+	UFUNCTION(BlueprintCallable, Category="Chess Clock")
+	void ApplyIncrement(EChessPlayerPosition Position);
+
 	UFUNCTION(BlueprintPure, Category="Chess Clock")
 	int32 GetRemainingTime(EChessPlayerPosition Position) const;
 
@@ -44,9 +50,11 @@ public:
 	UFUNCTION(BlueprintPure, Category="Chess Clock")
 	bool IsClockRunning() const { return bIsRunning; }
 
-	/** 플레이어별 시작 시간. 1 = 0.1초, 기본값은 10분. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chess Clock", meta=(ClampMin="0"))
 	int32 InitialTime = 6000;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chess Clock", meta=(ClampMin="0"))
+	int32 IncrementTime = 50;
 
 	UPROPERTY(BlueprintAssignable, Category="Chess Clock")
 	FOnChessClockTimeChanged OnTimeChanged;
