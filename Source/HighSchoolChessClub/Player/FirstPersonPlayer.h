@@ -26,16 +26,6 @@ class HIGHSCHOOLCHESSCLUB_API AFirstPersonPlayer : public ACharacter
 
 protected:
 	
-#pragma region Input Bindings
-	UPROPERTY(EditAnywhere, Category ="Input")
-	UInputAction* MoveAction;
-
-	UPROPERTY(EditAnywhere, Category ="Input")
-	class UInputAction* LookAction;
-
-	UPROPERTY(EditAnywhere, Category ="Input")
-	TObjectPtr<UInputAction> InteractAction;
-#pragma endregion
 	
 public:
 	AFirstPersonPlayer();
@@ -43,13 +33,9 @@ public:
 	void NotifyChessPlayerEnded(AChessPlayer* EndedPawn);
 	
 	UFUNCTION(BlueprintCallable, Category="Chess Player")
-	bool EnterChessPlayer(AChessPlayer* InChessPlayer);
+	void EnterChessPlayer(AChessPlayer* InChessPlayer);
 
 protected:
-	void MoveInput(const FInputActionValue& Value);
-	void LookInput(const FInputActionValue& Value);
-	void Interact();
-
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoAim(float Yaw, float Pitch);
 
@@ -61,4 +47,21 @@ protected:
 private:
 	UPROPERTY(Transient)
 	TObjectPtr<AChessPlayer> CurrentChessPlayer;
+	
+#pragma region Input Bindings
+	void MoveInput(const FInputActionValue& Value);
+	void LookInput(const FInputActionValue& Value);
+	void Interact();
+#pragma endregion
+	
+#pragma region Input Actions
+	UPROPERTY(EditAnywhere, Category ="Input")
+	UInputAction* MoveAction;
+
+	UPROPERTY(EditAnywhere, Category ="Input")
+	class UInputAction* LookAction;
+
+	UPROPERTY(EditAnywhere, Category ="Input")
+	TObjectPtr<UInputAction> InteractAction;
+#pragma endregion
 };

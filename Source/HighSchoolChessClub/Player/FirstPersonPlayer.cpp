@@ -82,20 +82,14 @@ void AFirstPersonPlayer::DoAim(float Yaw, float Pitch)
 	}
 }
 
-bool AFirstPersonPlayer::EnterChessPlayer(AChessPlayer* InChessPlayer)
+void AFirstPersonPlayer::EnterChessPlayer(AChessPlayer* InChessPlayer)
 {
-	// EnterPlayer transfers possession, so keep the controller before that happens.
-	AFirstPersonPlayerController* PlayerController = Cast<AFirstPersonPlayerController>(GetController());
+	const AFirstPersonPlayerController* PlayerController = Cast<AFirstPersonPlayerController>(GetController());
 
-	if (!InChessPlayer->EnterPlayer(this))
-	{
-		return false;
-	}
-
+	InChessPlayer->EnterPlayer(this);
 	PlayerController->SetControlMode(EControlMode::Chess);
 	
 	CurrentChessPlayer = InChessPlayer;
-	return true;
 }
 
 void AFirstPersonPlayer::DoMove(float Right, float Forward)

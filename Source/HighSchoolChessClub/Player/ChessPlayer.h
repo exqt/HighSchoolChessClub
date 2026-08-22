@@ -16,16 +16,9 @@ class UInputAction;
 class USceneComponent;
 class UStaticMeshComponent;
 struct FInputActionValue;
-struct FMinimalViewInfo;
 enum class ECommonInputType : uint8;
 
-UENUM(BlueprintType)
-enum class EChessPlayerMode : uint8
-{
-	Seated,
-	PlayingChess
-};
-
+/* 월드에서 돌아다니는 Pawn이 실제로 체스를 플레이 하기 위해 Possess하는 Pawn */
 UCLASS(Blueprintable)
 class HIGHSCHOOLCHESSCLUB_API AChessPlayer : public APawn, public IInteractable
 {
@@ -34,28 +27,40 @@ class HIGHSCHOOLCHESSCLUB_API AChessPlayer : public APawn, public IInteractable
 public:
 	AChessPlayer();
 
+	/**
+	 * FirstPersonPlayer가 ChessPlayer를 Possess 하기 위해 호출하는 함수
+	 * @param InExplorationPawn 월드에 돌아다니는 FirstPersonPlayer
+	 */
 	UFUNCTION(BlueprintCallable, Category="Chess Player")
-	bool EnterPlayer(AFirstPersonPlayer* InExplorationPawn);
+	void EnterPlayer(AFirstPersonPlayer* InExplorationPawn);
 
+	/* ChessPlayer를 Unpossess하고 기존의 FirstPersonPlayer로 돌아감 */
 	UFUNCTION(BlueprintCallable, Category="Chess Player")
 	void ReturnToExploration();
 
-	UFUNCTION(BlueprintCallable, Category="Chess Player|Chess")
-	void SetChessMatch(AChessMatch* InChessMatch) { ChessMatch = InChessMatch; }
-
-	UFUNCTION(BlueprintPure, Category="Chess Player|Chess")
+	UFUNCTION(BlueprintPure, Category="Chess Player")
 	AChessMatch* GetChessMatch() const { return ChessMatch; }
 
+	/* ChessMatch 쪽에 실제 게임 시작 요청 */
+	UFUNCTION(BlueprintCallable, Category="Chess Player")
+	void RequestStartMatch();
+
+#pragma region Interaction
 	virtual bool CanInteract_Implementation(APawn* Interactor) override;
 	virtual void Interact_Implementation(APawn* Interactor) override;
 	virtual void OnInteractionHover_Implementation(APawn* Interactor) override;
 	virtual void OnInteractionUnhover_Implementation(APawn* Interactor) override;
 	virtual FText GetInteractionName_Implementation() override;
+#pragma endregion
 
 protected:
+#pragma region Actor
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+	virtual void UnPossessed() override;
+#pragma endregion
 
 #pragma region Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Chess Player")
@@ -68,41 +73,46 @@ protected:
 	TObjectPtr<UCameraComponent> ChairCamera;
 #pragma endregion
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction")
+#pragma region Interaction
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chess Player")
 	FText InteractionName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chess Player|Camera", meta=(ClampMin="0.0", ClampMax="180.0"))
-	float MaxViewYaw = 60.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chess Player|Camera", meta=(ClampMin="-89.0", ClampMax="89.0"))
-	float MinViewPitch = -35.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chess Player|Camera", meta=(ClampMin="-89.0", ClampMax="89.0"))
-	float MaxViewPitch = 25.0f;
+#pragma endregion
 
 private:
+#pragma region Camera
+	/* FirstPersonPlayer -> ChessPlayer 시점 전환  */
 	void BeginPlayerView(APlayerController* PlayerController);
+
+	/* ChessPlayer -> FirstPersonPlayer 시점 전환  */
 	void EndPlayerView(APlayerController* PlayerController);
-	
-#pragma region Input Bindings
-	void LookInput(const FInputActionValue& Value);
-	void LookHoldStarted(const FInputActionValue& InputActionValue);
-	void LookHoldEnded(const FInputActionValue& InputActionValue);
+
+	/* 매 Tick 카메라 시점 업데이트 */
 	void TickCamera(float DeltaTime);
-	void StickLookStarted(const FInputActionValue& InputActionValue);
-	void StickLookInput(const FInputActionValue& InputActionValue);
-	void StickLookEnded(const FInputActionValue& InputActionValue);
-	void SelectInput(const FInputActionValue& InputActionValue);
-	void CancelInput(const FInputActionValue& InputActionValue);
-	bool UpdateCursorFromMouse() const;
-	void HandleInputMethodChanged(ECommonInputType InputType);
-#pragma endregion
-	
-#pragma region Cursor Movement
-	void CursorMoveInput(const FInputActionValue& Value);
-	FIntPoint ConvertInputToBoardDelta(FIntPoint InputDelta) const;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chess Player", meta=(AllowPrivateAccess="true", ClampMin="0.0", ClampMax="180.0"))
+	float MaxViewYaw = 60.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chess Player", meta=(AllowPrivateAccess="true", ClampMin="-89.0", ClampMax="89.0"))
+	float MinViewPitch = -35.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chess Player", meta=(AllowPrivateAccess="true", ClampMin="-89.0", ClampMax="89.0"))
+	float MaxViewPitch = 25.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chess Player", meta=(AllowPrivateAccess="true", ClampMin="0.0"))
+	float CameraBlendTime = 1.0f;
+
+	FRotator InitialChairCameraRelativeRotation = FRotator::ZeroRotator;
+	FRotator InitialViewRotation = FRotator::ZeroRotator;
+	float PreviousViewYawMin = 0.0f;
+	float PreviousViewYawMax = 0.0f;
+	float PreviousViewPitchMin = 0.0f;
+	float PreviousViewPitchMax = 0.0f;
+	bool bPreviousShowMouseCursor = false;
+	bool bLookHold = false;
+	bool bStickLookActive = false;
 #pragma endregion
 
+#pragma region Runtime State
 	UPROPERTY(Transient)
 	TObjectPtr<AFirstPersonPlayer> ExplorationPawn;
 
@@ -111,46 +121,58 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UCommonInputSubsystem> CommonInputSubsystem;
+#pragma endregion
 
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Player|Chess", meta=(AllowPrivateAccess="true"))
+#pragma region Chess
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Player", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<AChessMatch> ChessMatch;
 
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Player|Chess", meta=(AllowPrivateAccess="true"))
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Player", meta=(AllowPrivateAccess="true"))
 	EChessPlayerPosition PlayerPosition = EChessPlayerPosition::PlayerA;
+#pragma endregion
 
-	TWeakObjectPtr<APlayerController> ViewingController;
-	FRotator InitialChairCameraRelativeRotation = FRotator::ZeroRotator;
-	FRotator InitialViewRotation = FRotator::ZeroRotator;
-	float PreviousViewYawMin = 0.0f;
-	float PreviousViewYawMax = 0.0f;
-	float PreviousViewPitchMin = 0.0f;
-	float PreviousViewPitchMax = 0.0f;
-	bool bPreviousShowMouseCursor = false;
+#pragma region Cursor Movement
+	void CursorMoveInput(const FInputActionValue& Value);
+	FIntPoint ConvertInputToBoardDelta(FIntPoint InputDelta) const;
 
-	float CameraBlendTime = 1.0f;
-	bool bLookHold = false;
-	bool bStickLookActive = false;
-	
+	/* 현재 마우스 포인터 아래의 체스판 칸을 찾아 HumanParticipant의 논리 커서를 갱신한다. */
+	void UpdateCursorFromMouse() const;
+#pragma endregion
+
 #pragma region Input Bindings
-	UPROPERTY(EditAnywhere, Category ="Input")
+	void LookInput(const FInputActionValue& Value);
+	void LookHoldStarted(const FInputActionValue& InputActionValue);
+	void LookHoldEnded(const FInputActionValue& InputActionValue);
+	void StickLookStarted(const FInputActionValue& InputActionValue);
+	void StickLookInput(const FInputActionValue& InputActionValue);
+	void StickLookEnded(const FInputActionValue& InputActionValue);
+	void SelectInput(const FInputActionValue& InputActionValue);
+	void CancelInput(const FInputActionValue& InputActionValue);
+
+	/**
+	 * Common Input에서 사용하는 입력방식이 바뀌었을 때
+	 * @param InputType Gamepad 또는 KeyboardMouse
+	 */
+	void HandleInputMethodChanged(ECommonInputType InputType);
+#pragma endregion
+
+#pragma region Input Actions
+	UPROPERTY(EditAnywhere, Category="Chess Player")
 	TObjectPtr<UInputAction> LookAction;
 
-	UPROPERTY(EditAnywhere, Category ="Input")
+	UPROPERTY(EditAnywhere, Category="Chess Player")
 	TObjectPtr<UInputAction> CursorMoveAction;
 
-	UPROPERTY(EditAnywhere, Category ="Input", meta=(ClampMin="0.0", ClampMax="1.0"))
-	float CursorMoveThreshold = 0.5f;
-	
-	UPROPERTY(EditAnywhere, Category ="Input")
+	UPROPERTY(EditAnywhere, Category="Chess Player")
 	TObjectPtr<UInputAction> LookHoldAction;
-	
-	UPROPERTY(EditAnywhere, Category ="Input")
+
+	UPROPERTY(EditAnywhere, Category="Chess Player")
 	TObjectPtr<UInputAction> JoystickLookAction;
 
-	UPROPERTY(EditAnywhere, Category ="Input")
+	UPROPERTY(EditAnywhere, Category="Chess Player")
 	TObjectPtr<UInputAction> SelectAction;
 
-	UPROPERTY(EditAnywhere, Category ="Input")
+	UPROPERTY(EditAnywhere, Category="Chess Player")
 	TObjectPtr<UInputAction> CancelAction;
 #pragma endregion
 };

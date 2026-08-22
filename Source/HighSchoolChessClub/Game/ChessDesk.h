@@ -12,9 +12,7 @@ class UStaticMeshComponent;
 
 /**
  * 체스 게임의 View를 담당하는 Actor
- * - 역할
- *  - ChessPiece Actor들을 관리
- *  - 플레이어 커서 움직임 관리
+ * 역할: ChessPiece Actor들을 관리, 플레이어 커서 움직임 관리
  */
 UCLASS(Blueprintable)
 class HIGHSCHOOLCHESSCLUB_API AChessDesk : public AActor

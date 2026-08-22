@@ -20,17 +20,13 @@ class HIGHSCHOOLCHESSCLUB_API UInteractionComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this component's properties
 	UInteractionComponent();
 
 protected:
-	// Called when the game starts
 	virtual void BeginPlay() override;
 
 public:
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
-	                           FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
 	UPROPERTY(BlueprintAssignable)
 	FOnInteractionHoverSignature OnInteractionHover;
@@ -41,7 +37,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	TScriptInterface<IInteractable> GetCurrentInteractable();
 
-	/** Executes the interaction on the actor currently under the player's crosshair. */
 	UFUNCTION(BlueprintCallable, Category="Interaction")
 	bool TryInteract();
 	

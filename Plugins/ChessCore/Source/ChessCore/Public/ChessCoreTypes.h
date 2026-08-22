@@ -25,6 +25,7 @@ enum class EChessCorePieceType : uint8
 	King
 };
 
+/* 승리 상태 */
 UENUM(BlueprintType)
 enum class EChessCoreGameResult : uint8
 {

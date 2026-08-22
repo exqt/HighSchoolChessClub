@@ -39,6 +39,23 @@ void AChessPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 	InitialChairCameraRelativeRotation = ChairCamera->GetRelativeRotation();
+	if (ChessMatch)
+	{
+		ChessMatch->RegisterParticipant(PlayerPosition, this);
+	}
+}
+
+void AChessPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (ChessMatch)
+	{
+		UChessParticipant* Participant = ChessMatch->GetParticipant(PlayerPosition);
+		if (Participant && Participant->GetPerformer() == this)
+		{
+			ChessMatch->UnregisterParticipant(Participant);
+		}
+	}
+	Super::EndPlay(EndPlayReason);
 }
 
 void AChessPlayer::Tick(float DeltaTime)
@@ -47,30 +64,15 @@ void AChessPlayer::Tick(float DeltaTime)
 	TickCamera(DeltaTime);
 }
 
-bool AChessPlayer::EnterPlayer(AFirstPersonPlayer* InExplorationPawn)
+void AChessPlayer::EnterPlayer(AFirstPersonPlayer* InExplorationPawn)
 {
-	if (!IsValid(InExplorationPawn) || IsValid(ExplorationPawn))
-	{
-		return false;
-	}
-
-	UChessHumanParticipant* Participant = ChessMatch
-		? ChessMatch->GetHumanParticipant(PlayerPosition)
-		: nullptr;
-	if (!Participant)
-	{
-		return false;
-	}
-
+	UChessHumanParticipant* Participant = ChessMatch->GetHumanParticipant(PlayerPosition);
 	APlayerController* PlayerController = Cast<APlayerController>(InExplorationPawn->GetController());
-	if (!IsValid(PlayerController))
-	{
-		return false;
-	}
 
 	ChairCamera->SetRelativeRotation(InitialChairCameraRelativeRotation);
 
 	const FRotator ChairViewRotation = ChairCamera->GetComponentRotation();
+
 	InitialViewRotation = ChairViewRotation;
 	ExplorationPawn = InExplorationPawn;
 	HumanParticipant = Participant;
@@ -82,10 +84,26 @@ bool AChessPlayer::EnterPlayer(AFirstPersonPlayer* InExplorationPawn)
 	PlayerController->SetControlRotation(ChairViewRotation);
 
 	BeginPlayerView(PlayerController);
-	PlayerController->SetViewTargetWithBlend(this, CameraBlendTime, VTBlend_EaseInOut, 2.0f, true);
-	HumanParticipant->AttachInputSource(this);
 
-	return true;
+	// TODO: Possess 시 Blend가 되지 않음
+	PlayerController->SetViewTargetWithBlend(this, CameraBlendTime, VTBlend_EaseInOut, 2.0f, true);
+
+	ChessMatch->EnterMatchSetup();
+}
+
+void AChessPlayer::RequestStartMatch()
+{
+	ChessMatch->RequestStartMatch(HumanParticipant);
+}
+
+void AChessPlayer::UnPossessed()
+{
+	Super::UnPossessed();
+
+	if (ChessMatch && HumanParticipant)
+	{
+		ChessMatch->NotifyHumanPlayerUnpossessed(HumanParticipant);
+	}
 }
 
 void AChessPlayer::ReturnToExploration()
@@ -106,7 +124,6 @@ void AChessPlayer::ReturnToExploration()
 	}
 
 	EndPlayerView(PlayerController);
-	HumanParticipant->DetachInputSource(this);
 	HumanParticipant = nullptr;
 
 	PlayerController->SetViewTarget(PreviousViewTarget);
@@ -120,7 +137,6 @@ void AChessPlayer::ReturnToExploration()
 
 void AChessPlayer::BeginPlayerView(APlayerController* PlayerController)
 {
-	ViewingController = PlayerController;
 	bPreviousShowMouseCursor = PlayerController->bShowMouseCursor;
 	CommonInputSubsystem = UCommonInputSubsystem::Get(PlayerController->GetLocalPlayer());
 	CommonInputSubsystem->OnInputMethodChangedNative.AddUObject(this, &AChessPlayer::HandleInputMethodChanged);
@@ -143,11 +159,6 @@ void AChessPlayer::BeginPlayerView(APlayerController* PlayerController)
 
 void AChessPlayer::EndPlayerView(APlayerController* PlayerController)
 {
-	if (ViewingController.Get() != PlayerController)
-	{
-		return;
-	}
-
 	if (APlayerCameraManager* CameraManager = PlayerController->PlayerCameraManager)
 	{
 		CameraManager->ViewYawMin = PreviousViewYawMin;
@@ -160,7 +171,6 @@ void AChessPlayer::EndPlayerView(APlayerController* PlayerController)
 	CommonInputSubsystem = nullptr;
 	PlayerController->bShowMouseCursor = bPreviousShowMouseCursor;
 	PlayerController->SetInputMode(FInputModeGameOnly());
-	ViewingController.Reset();
 }
 
 void AChessPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -186,6 +196,7 @@ void AChessPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	}
 }
 
+#pragma region Input Bindings
 void AChessPlayer::LookInput(const FInputActionValue& Value)
 {
 	if (!bLookHold) return;
@@ -197,13 +208,10 @@ void AChessPlayer::LookInput(const FInputActionValue& Value)
 
 void AChessPlayer::CursorMoveInput(const FInputActionValue& Value)
 {
-	if (!HumanParticipant)
-	{
-		return;
-	}
-
 	const FVector2D Axis = Value.Get<FVector2D>();
 	FIntPoint Delta = FIntPoint::ZeroValue;
+
+	float CursorMoveThreshold = 0.5f;
 
 	// Quantize each analog axis independently so diagonal stick input becomes (±1, ±1).
 	if (FMath::Abs(Axis.X) >= CursorMoveThreshold)
@@ -222,16 +230,6 @@ void AChessPlayer::CursorMoveInput(const FInputActionValue& Value)
 	}
 }
 
-FIntPoint AChessPlayer::ConvertInputToBoardDelta(const FIntPoint InputDelta) const
-{
-	if (PlayerPosition == EChessPlayerPosition::PlayerB)
-	{
-		return FIntPoint(-InputDelta.X, -InputDelta.Y);
-	}
-
-	return InputDelta;
-}
-
 void AChessPlayer::LookHoldStarted(const FInputActionValue& InputActionValue)
 {
 	bLookHold = true;
@@ -240,6 +238,53 @@ void AChessPlayer::LookHoldStarted(const FInputActionValue& InputActionValue)
 void AChessPlayer::LookHoldEnded(const FInputActionValue& InputActionValue)
 {
 	bLookHold = false;
+}
+
+void AChessPlayer::StickLookStarted(const FInputActionValue& InputActionValue)
+{
+	bStickLookActive = true;
+}
+
+void AChessPlayer::StickLookInput(const FInputActionValue& InputActionValue)
+{
+	const FVector2D LookAxis = InputActionValue.Get<FVector2D>();
+
+	AddControllerYawInput(LookAxis.X);
+	AddControllerPitchInput(LookAxis.Y);
+}
+
+void AChessPlayer::StickLookEnded(const FInputActionValue& InputActionValue)
+{
+	bStickLookActive = false;
+}
+
+void AChessPlayer::SelectInput(const FInputActionValue& InputActionValue)
+{
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+
+	// 컨트롤러가 아닌 마우스를 사용하여 클릭하였다면
+	if (PlayerController->IsInputKeyDown(EKeys::LeftMouseButton))
+	{
+		UpdateCursorFromMouse();
+	}
+
+	HumanParticipant->SelectCurrentSquare();
+}
+
+void AChessPlayer::CancelInput(const FInputActionValue& InputActionValue)
+{
+	HumanParticipant->CancelSelection();
+}
+#pragma endregion
+
+FIntPoint AChessPlayer::ConvertInputToBoardDelta(const FIntPoint InputDelta) const
+{
+	if (PlayerPosition == EChessPlayerPosition::PlayerB)
+	{
+		return FIntPoint(-InputDelta.X, -InputDelta.Y);
+	}
+
+	return InputDelta;
 }
 
 void AChessPlayer::TickCamera(float DeltaTime)
@@ -266,59 +311,25 @@ void AChessPlayer::TickCamera(float DeltaTime)
 	}
 }
 
-void AChessPlayer::StickLookStarted(const FInputActionValue& InputActionValue)
-{
-	bStickLookActive = true;
-}
-
-void AChessPlayer::StickLookInput(const FInputActionValue& InputActionValue)
-{
-    const FVector2D LookAxis = InputActionValue.Get<FVector2D>();
-
-    AddControllerYawInput(LookAxis.X);
-    AddControllerPitchInput(LookAxis.Y);
-}
-
-void AChessPlayer::StickLookEnded(const FInputActionValue& InputActionValue)
-{
-	bStickLookActive = false;
-}
-
-void AChessPlayer::SelectInput(const FInputActionValue& InputActionValue)
-{
-	if (HumanParticipant)
-	{
-		APlayerController* PlayerController = Cast<APlayerController>(GetController());
-		if (PlayerController && PlayerController->IsInputKeyDown(EKeys::LeftMouseButton))
-		{
-			UpdateCursorFromMouse();
-		}
-		HumanParticipant->SelectCurrentSquare();
-	}
-}
-
-void AChessPlayer::CancelInput(const FInputActionValue& InputActionValue)
-{
-	if (HumanParticipant)
-	{
-		HumanParticipant->CancelSelection();
-	}
-}
-
-bool AChessPlayer::UpdateCursorFromMouse() const
+void AChessPlayer::UpdateCursorFromMouse() const
 {
 	APlayerController* PlayerController = Cast<APlayerController>(GetController());
 	FVector RayOrigin;
 	FVector RayDirection;
+
 	if (!PlayerController->DeprojectMousePositionToWorld(RayOrigin, RayDirection))
 	{
-		return false;
+		return;
 	}
 
 	FIntPoint Square;
-	AChessDesk* Desk = ChessMatch->GetDesk();
-	return Desk->ProjectRayToSquare(RayOrigin, RayDirection, Square)
-		&& HumanParticipant->SetCursorSquare(Square);
+	const AChessDesk* Desk = ChessMatch->GetDesk();
+
+	// 가리키는 체스판 칸을 계산하고, 선택에 사용할 논리 커서를 해당 칸으로 옮긴다.
+	if (Desk->ProjectRayToSquare(RayOrigin, RayDirection, Square))
+	{
+		HumanParticipant->SetCursorSquare(Square);
+	}
 }
 
 void AChessPlayer::HandleInputMethodChanged(const ECommonInputType InputType)

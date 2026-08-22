@@ -16,24 +16,6 @@ void UChessHumanParticipant::EndTurn()
 	RefreshCursorVisibility();
 }
 
-void UChessHumanParticipant::AttachInputSource(AActor* InInputSource)
-{
-	InputSource = InInputSource;
-	RefreshCursorVisibility();
-}
-
-void UChessHumanParticipant::DetachInputSource(AActor* InInputSource)
-{
-	if (InputSource.Get() != InInputSource)
-	{
-		return;
-	}
-
-	CancelSelection();
-	InputSource.Reset();
-	RefreshCursorVisibility();
-}
-
 bool UChessHumanParticipant::MoveCursor(const FIntPoint Delta)
 {
 	return CanAcceptInput() && Match->GetDesk()->MoveCursor(Delta);
@@ -115,7 +97,7 @@ void UChessHumanParticipant::SetUsingPointerInput(const bool bInUsingPointerInpu
 
 bool UChessHumanParticipant::CanAcceptInput() const
 {
-	return bIsTurnActive && InputSource.IsValid() && Match->GetDesk();
+	return bIsTurnActive && Match->GetDesk();
 }
 
 bool UChessHumanParticipant::SelectPieceAtCursor()
