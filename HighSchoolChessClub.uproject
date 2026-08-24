@@ -118,6 +118,14 @@
 		{
 			"Name": "GameplayBehaviorSmartObjects",
 			"Enabled": true
+		},
+		{
+			"Name": "GameplayInteractions",
+			"Enabled": true
+		},
+		{
+			"Name": "AnimationWarping",
+			"Enabled": true
 		}
 	]
 }
