@@ -12,9 +12,6 @@ void UCCPrimaryLayout::RegisterWidgetStack(FGameplayTag InStackTag, UCommonActiv
 {
 	if (!IsDesignTime())
 	{
-		if (!RegisteredWidgetStackMap.Contains(InStackTag))
-		{
-			RegisteredWidgetStackMap.Add(InStackTag, InStack);
-		}
+		RegisteredWidgetStackMap.Add(InStackTag, InStack);
 	}
 }

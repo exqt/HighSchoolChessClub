@@ -26,12 +26,22 @@ void UCCUISubsystem::PushSoftWidgetToStackAsync(
 ) {
 	UAssetManager::Get().GetStreamableManager().RequestAsyncLoad(
 		InSoftWidgetClass.ToSoftObjectPath(),
-		FStreamableDelegate::CreateLambda(
+		FStreamableDelegate::CreateWeakLambda(
+			this,
 			[InSoftWidgetClass, this, InWidgetStackTag, InCallback]()
 			{
+				if (!ensureMsgf(IsValid(CreatedPrimaryLayout), TEXT("Primary layout is not registered while pushing widget to stack: %s"), *InWidgetStackTag.ToString()))
+				{
+					return;
+				}
+
 				UClass* LoadedWidgetClass = InSoftWidgetClass.Get();
 				UCommonActivatableWidgetContainerBase* FoundWidgetStack =
 					CreatedPrimaryLayout->FindWidgetStackByTag(InWidgetStackTag);
+				if (!ensureMsgf(IsValid(FoundWidgetStack), TEXT("Widget stack is not registered: %s"), *InWidgetStackTag.ToString()))
+				{
+					return;
+				}
 
 				FoundWidgetStack->AddWidget<UCommonActivatableWidget>(
 					LoadedWidgetClass,
