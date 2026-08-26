@@ -88,8 +88,14 @@ public:
 	UFUNCTION(BlueprintPure, Category="Chess Match")
 	EChessCorePieceColor GetPlayerColor(EChessPlayerPosition Position) const;
 
-	UFUNCTION(BlueprintPure, Category="ChessMatch")
+	UFUNCTION(BlueprintPure, Category="Chess Match")
 	EChessCorePieceColor GetHumanPlayerColor() const;
+
+	UFUNCTION(BlueprintPure, Category="Chess Match")
+	EChessPlayerPosition GetHumanPlayerPosition() const { return EChessPlayerPosition::PlayerA; }
+
+	UFUNCTION(BlueprintPure, Category="Chess Match")
+	EChessPlayerPosition GetNPCPlayerPosition() const { return EChessPlayerPosition::PlayerB; }
 #pragma endregion
 
 #pragma region Match

@@ -62,7 +62,7 @@ bool UInteractionComponent::TryInteract()
 
 void UInteractionComponent::CheckInteractable()
 {
-	const APawn* OwnerPawn = Cast<APawn>(GetOwner());
+	APawn* OwnerPawn = Cast<APawn>(GetOwner());
 	if (!OwnerPawn) return SetCurrentInteractable(nullptr);
 
 	const AController* Controller = OwnerPawn->GetController();
@@ -94,7 +94,7 @@ void UInteractionComponent::CheckInteractable()
 
 	AActor* HitActor = Hit.GetActor();
 
-	if (HitActor == nullptr || !HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass())) return SetCurrentInteractable(nullptr);
+	if (HitActor == nullptr || !HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()) || !IInteractable::Execute_CanInteract(HitActor, OwnerPawn)) return SetCurrentInteractable(nullptr);
 
 	return SetCurrentInteractable(HitActor);
 }

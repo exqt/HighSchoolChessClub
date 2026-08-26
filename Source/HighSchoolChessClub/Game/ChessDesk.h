@@ -6,6 +6,7 @@
 #include "ChessDesk.generated.h"
 
 class AChessPiece;
+class AChessPlayer;
 class UInstancedStaticMeshComponent;
 class USceneComponent;
 class UStaticMeshComponent;
@@ -21,6 +22,14 @@ class HIGHSCHOOLCHESSCLUB_API AChessDesk : public AActor
 
 public:
 	AChessDesk();
+
+#pragma region Seats
+	UFUNCTION(BlueprintCallable, Category="Chess Desk")
+	bool PullNPCChairIn(AActor* NPC);
+
+	UFUNCTION(BlueprintCallable, Category="Chess Desk")
+	bool PullNPCChairOut(AActor* NPC);
+#pragma endregion
 
 #pragma region Cursor
 	UFUNCTION(BlueprintCallable, Category="Chess Desk|Cursor")
@@ -60,6 +69,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Chess Desk|Highlight")
 	TObjectPtr<UInstancedStaticMeshComponent> LegalMoveCells;
 #pragma endregion
+
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Desk")
+	TObjectPtr<AChessPlayer> NPCChessPlayer;
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Desk|Cursor")
 	FIntPoint CursorSquare = FIntPoint::ZeroValue;

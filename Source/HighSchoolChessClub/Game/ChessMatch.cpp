@@ -1,6 +1,7 @@
 #include "Game/ChessMatch.h"
 
 #include "ChessGameState.h"
+#include "Game/ChessBotParticipant.h"
 #include "Game/ChessClockComponent.h"
 #include "Game/ChessDesk.h"
 #include "Game/ChessHumanParticipant.h"
@@ -11,7 +12,7 @@ AChessMatch::AChessMatch()
 	PrimaryActorTick.bCanEverTick = true;
 	ChessClock = CreateDefaultSubobject<UChessClockComponent>(TEXT("Chess Clock"));
 	PlayerAParticipantClass = UChessHumanParticipant::StaticClass();
-	PlayerBParticipantClass = UChessHumanParticipant::StaticClass();
+	PlayerBParticipantClass = UChessBotParticipant::StaticClass();
 }
 
 void AChessMatch::Tick(const float DeltaSeconds)
@@ -78,7 +79,8 @@ UChessParticipant* AChessMatch::RegisterParticipant(const EChessPlayerPosition P
 	}
 
 	const TSubclassOf<UChessParticipant> ParticipantClass = Position == EChessPlayerPosition::PlayerA ? PlayerAParticipantClass : PlayerBParticipantClass;
-	UClass* ClassToCreate = ParticipantClass ? ParticipantClass.Get() : UChessHumanParticipant::StaticClass();
+	UClass* RequiredClass = Position == EChessPlayerPosition::PlayerA ? UChessHumanParticipant::StaticClass() : UChessBotParticipant::StaticClass();
+	UClass* ClassToCreate = ParticipantClass && ParticipantClass->IsChildOf(RequiredClass) ? ParticipantClass.Get() : RequiredClass;
 
 	Participant = NewObject<UChessParticipant>(this, ClassToCreate);
 	Participant->Initialize(this, Position, Performer);
@@ -299,10 +301,7 @@ void AChessMatch::RegisterConfiguredParticipants()
 	{
 		RegisterParticipant(EChessPlayerPosition::PlayerA, PlayerAPerformer);
 	}
-	if (PlayerBPerformer)
-	{
-		RegisterParticipant(EChessPlayerPosition::PlayerB, PlayerBPerformer);
-	}
+	RegisterParticipant(EChessPlayerPosition::PlayerB, PlayerBPerformer);
 }
 
 void AChessMatch::RefreshParticipantState()

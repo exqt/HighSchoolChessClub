@@ -14,6 +14,7 @@
 #include "Game/ChessDesk.h"
 #include "Game/ChessHumanParticipant.h"
 #include "Game/ChessMatch.h"
+#include "Game/PositionTweenComponent.h"
 #include "Player/FirstPersonPlayer.h"
 #include "Player/FirstPersonPlayerController.h"
 
@@ -32,6 +33,11 @@ AChessPlayer::AChessPlayer()
 	ChairCamera->SetAutoActivate(true);
 	ChairCamera->bUsePawnControlRotation = true;
 
+	SeatAnchor = CreateDefaultSubobject<USceneComponent>(TEXT("Seat Anchor"));
+	SeatAnchor->SetupAttachment(SceneRoot);
+
+	PositionTween = CreateDefaultSubobject<UPositionTweenComponent>(TEXT("Position Tween"));
+
 	InteractionName = NSLOCTEXT("ChessPlayer", "InteractionName", "앉기");
 }
 
@@ -39,9 +45,13 @@ void AChessPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 	InitialChairCameraRelativeRotation = ChairCamera->GetRelativeRotation();
+	ChairOutWorldLocation = GetActorLocation();
 	if (ChessMatch)
 	{
-		ChessMatch->RegisterParticipant(PlayerPosition, this);
+		if (IsHumanSeat())
+		{
+			ChessMatch->RegisterParticipant(PlayerPosition, this);
+		}
 	}
 }
 
@@ -62,6 +72,7 @@ void AChessPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	TickCamera(DeltaTime);
+	UpdateChairMove();
 }
 
 void AChessPlayer::EnterPlayer(AFirstPersonPlayer* InExplorationPawn)
@@ -88,6 +99,7 @@ void AChessPlayer::EnterPlayer(AFirstPersonPlayer* InExplorationPawn)
 	// TODO: Possess 시 Blend가 되지 않음
 	PlayerController->SetViewTargetWithBlend(this, CameraBlendTime, VTBlend_EaseInOut, 2.0f, true);
 
+	PullChairIn();
 	ChessMatch->EnterMatchSetup();
 }
 
@@ -130,6 +142,7 @@ void AChessPlayer::ReturnToExploration()
 
 	PawnToRestore->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 	PawnToRestore->NotifyChessPlayerEnded(this);
+	PullChairOut();
 	ExplorationPawn = nullptr;
 
 	PlayerController->SetViewTargetWithBlend(PawnToRestore, CameraBlendTime, VTBlend_EaseInOut, 2.0f, true);
@@ -354,7 +367,8 @@ void AChessPlayer::HandleInputMethodChanged(const ECommonInputType InputType)
 
 bool AChessPlayer::CanInteract_Implementation(APawn* Interactor)
 {
-	return IsValid(Cast<AFirstPersonPlayer>(Interactor))
+	return IsHumanSeat()
+		&& IsValid(Cast<AFirstPersonPlayer>(Interactor))
 		&& !IsValid(ExplorationPawn)
 		&& ChessMatch
 		&& ChessMatch->GetHumanParticipant(PlayerPosition);
@@ -379,4 +393,76 @@ void AChessPlayer::OnInteractionUnhover_Implementation(APawn* Interactor)
 FText AChessPlayer::GetInteractionName_Implementation()
 {
 	return InteractionName;
+}
+
+void AChessPlayer::PullChairIn()
+{
+	MoveChair(true);
+}
+
+void AChessPlayer::PullChairOut()
+{
+	MoveChair(false);
+}
+
+bool AChessPlayer::PullChairOutAndDetach(AActor* Occupant)
+{
+	if (AttachedSeatOccupant != Occupant)
+	{
+		return false;
+	}
+
+	SeatOccupantToDetachAfterMove = Occupant;
+	PullChairOut();
+	return true;
+}
+
+void AChessPlayer::AttachSeatOccupant(AActor* Occupant)
+{
+	AttachedSeatOccupant = Occupant;
+	if (ACharacter* Character = Cast<ACharacter>(Occupant))
+	{
+		Character->GetCharacterMovement()->DisableMovement();
+	}
+	Occupant->AttachToComponent(SeatAnchor, FAttachmentTransformRules::KeepWorldTransform);
+}
+
+void AChessPlayer::DetachSeatOccupant(AActor* Occupant)
+{
+	if (AttachedSeatOccupant != Occupant)
+	{
+		return;
+	}
+
+	Occupant->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	if (ACharacter* Character = Cast<ACharacter>(Occupant))
+	{
+		Character->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	}
+	AttachedSeatOccupant = nullptr;
+}
+
+void AChessPlayer::MoveChair(const bool bPullIn)
+{
+	const FVector TargetLocation = bPullIn ? ChairOutWorldLocation + GetActorTransform().TransformVectorNoScale(ChairPulledInLocalOffset) : ChairOutWorldLocation;
+	bChairMoveTargetPulledIn = bPullIn;
+	bChairMovePending = true;
+	PositionTween->TweenToPosition(TargetLocation, ChairMoveDuration);
+}
+
+void AChessPlayer::UpdateChairMove()
+{
+	if (!bChairMovePending || PositionTween->IsPositionTweening())
+	{
+		return;
+	}
+
+	bChairMovePending = false;
+	bChairPulledIn = bChairMoveTargetPulledIn;
+	if (!bChairPulledIn && SeatOccupantToDetachAfterMove)
+	{
+		DetachSeatOccupant(SeatOccupantToDetachAfterMove);
+		SeatOccupantToDetachAfterMove = nullptr;
+	}
+	OnChairMoveFinished.Broadcast(bChairPulledIn);
 }

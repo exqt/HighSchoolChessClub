@@ -1,6 +1,7 @@
 #include "Game/ChessDesk.h"
 
 #include "Game/ChessPiece.h"
+#include "Player/ChessPlayer.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -34,6 +35,28 @@ void AChessDesk::BeginPlay()
 	CursorSquare.Y = FMath::Clamp(CursorSquare.Y, 0, 7);
 	RefreshCursorTransform();
 	SetCursorVisible(false);
+}
+
+bool AChessDesk::PullNPCChairIn(AActor* NPC)
+{
+	if (!NPCChessPlayer)
+	{
+		return false;
+	}
+
+	NPCChessPlayer->AttachSeatOccupant(NPC);
+	NPCChessPlayer->PullChairIn();
+	return true;
+}
+
+bool AChessDesk::PullNPCChairOut(AActor* NPC)
+{
+	if (!NPCChessPlayer)
+	{
+		return false;
+	}
+
+	return NPCChessPlayer->PullChairOutAndDetach(NPC);
 }
 
 bool AChessDesk::MoveCursor(const FIntPoint Delta)

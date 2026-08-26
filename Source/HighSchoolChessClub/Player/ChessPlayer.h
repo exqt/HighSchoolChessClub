@@ -13,10 +13,13 @@ class UChessHumanParticipant;
 class UCommonInputSubsystem;
 class UCameraComponent;
 class UInputAction;
+class UPositionTweenComponent;
 class USceneComponent;
 class UStaticMeshComponent;
 struct FInputActionValue;
 enum class ECommonInputType : uint8;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChessChairMoveFinished, bool, bPulledIn);
 
 /* 월드에서 돌아다니는 Pawn이 실제로 체스를 플레이 하기 위해 Possess하는 Pawn */
 UCLASS(Blueprintable)
@@ -40,6 +43,33 @@ public:
 
 	UFUNCTION(BlueprintPure, Category="Chess Player")
 	AChessMatch* GetChessMatch() const { return ChessMatch; }
+
+	UFUNCTION(BlueprintPure, Category="Chess Player")
+	EChessPlayerPosition GetPlayerPosition() const { return PlayerPosition; }
+
+	UFUNCTION(BlueprintPure, Category="Chess Player")
+	bool IsHumanSeat() const { return PlayerPosition == EChessPlayerPosition::PlayerA; }
+
+	UFUNCTION(BlueprintCallable, Category="Chess Player")
+	void PullChairIn();
+
+	UFUNCTION(BlueprintCallable, Category="Chess Player")
+	void PullChairOut();
+
+	UFUNCTION(BlueprintCallable, Category="Chess Player")
+	bool PullChairOutAndDetach(AActor* Occupant);
+
+	UFUNCTION(BlueprintCallable, Category="Chess Player")
+	void AttachSeatOccupant(AActor* Occupant);
+
+	UFUNCTION(BlueprintCallable, Category="Chess Player")
+	void DetachSeatOccupant(AActor* Occupant);
+
+	UFUNCTION(BlueprintPure, Category="Chess Player")
+	bool IsChairPulledIn() const { return bChairPulledIn; }
+
+	UPROPERTY(BlueprintAssignable, Category="Chess Player")
+	FOnChessChairMoveFinished OnChairMoveFinished;
 
 	/* ChessMatch 쪽에 실제 게임 시작 요청 */
 	UFUNCTION(BlueprintCallable, Category="Chess Player")
@@ -71,6 +101,12 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Chess Player")
 	TObjectPtr<UCameraComponent> ChairCamera;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Chess Player")
+	TObjectPtr<USceneComponent> SeatAnchor;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Chess Player")
+	TObjectPtr<UPositionTweenComponent> PositionTween;
 #pragma endregion
 
 #pragma region Interaction
@@ -121,6 +157,12 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UCommonInputSubsystem> CommonInputSubsystem;
+
+	UPROPERTY(Transient)
+	TObjectPtr<AActor> AttachedSeatOccupant;
+
+	UPROPERTY(Transient)
+	TObjectPtr<AActor> SeatOccupantToDetachAfterMove;
 #pragma endregion
 
 #pragma region Chess
@@ -129,6 +171,20 @@ private:
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Player", meta=(AllowPrivateAccess="true"))
 	EChessPlayerPosition PlayerPosition = EChessPlayerPosition::PlayerA;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chess Player", meta=(AllowPrivateAccess="true"))
+	FVector ChairPulledInLocalOffset = FVector(30.0f, 0.0f, 0.0f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chess Player", meta=(AllowPrivateAccess="true", ClampMin="0.0"))
+	float ChairMoveDuration = 0.35f;
+
+	FVector ChairOutWorldLocation = FVector::ZeroVector;
+	bool bChairMovePending = false;
+	bool bChairMoveTargetPulledIn = false;
+	bool bChairPulledIn = false;
+
+	void MoveChair(bool bPullIn);
+	void UpdateChairMove();
 #pragma endregion
 
 #pragma region Cursor Movement
