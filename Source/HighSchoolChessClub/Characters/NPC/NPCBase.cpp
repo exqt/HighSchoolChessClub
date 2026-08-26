@@ -1,7 +1,9 @@
 #include "Characters/NPC/NPCBase.h"
 
 #include "Blueprint/UserWidget.h"
+#include "Blueprint/WidgetTree.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/TextBlock.h"
 #include "Components/WidgetComponent.h"
 #include "Dialogue/CCDialogueSubsystem.h"
 #include "GameFramework/Controller.h"
@@ -34,6 +36,7 @@ void ANPCBase::BeginPlay()
 		this,
 		&ThisClass::HandleDialogueActiveChanged
 	);
+	UpdateInteractionWidgetText();
 }
 
 void ANPCBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -52,12 +55,12 @@ void ANPCBase::Tick(float DeltaSeconds)
 
 bool ANPCBase::CanInteract_Implementation(APawn*)
 {
-	return !bIsDialogueActive;
+	return NPCState == ENPCState::StandingIdle && !bIsDialogueActive;
 }
 
 FText ANPCBase::GetInteractionName_Implementation()
 {
-	return NSLOCTEXT("Interaction", "Interact", "Interact");
+	return NSLOCTEXT("Interaction", "Talk", "말 걸기");
 }
 
 void ANPCBase::HandleDialogueActiveChanged(bool bIsActive)
@@ -65,9 +68,30 @@ void ANPCBase::HandleDialogueActiveChanged(bool bIsActive)
 	bIsDialogueActive = bIsActive;
 }
 
+void ANPCBase::UpdateInteractionWidgetText()
+{
+	InteractionWidget->InitWidget();
+	UUserWidget* UserWidget = InteractionWidget->GetUserWidgetObject();
+	if (!UserWidget)
+	{
+		return;
+	}
+
+	TArray<UWidget*> Widgets;
+	UserWidget->WidgetTree->GetAllWidgets(Widgets);
+	for (UWidget* Widget : Widgets)
+	{
+		if (UTextBlock* TextBlock = Cast<UTextBlock>(Widget))
+		{
+			TextBlock->SetText(IInteractable::Execute_GetInteractionName(this));
+			return;
+		}
+	}
+}
+
 void ANPCBase::CheckInteractionWidgetVisibilityDistance() const
 {
-	if (bIsDialogueActive)
+	if (NPCState != ENPCState::StandingIdle || bIsDialogueActive)
 	{
 		InteractionWidget->SetVisibility(false);
 		return;

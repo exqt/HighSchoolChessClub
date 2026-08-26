@@ -9,6 +9,16 @@
 
 class UWidgetComponent;
 
+UENUM(BlueprintType)
+enum class ENPCState : uint8
+{
+	StandingIdle,
+	Talking,
+	Texting,
+	Walking,
+	Playing
+};
+
 UCLASS(Blueprintable)
 class HIGHSCHOOLCHESSCLUB_API ANPCBase : public ACharacter, public IInteractable
 {
@@ -21,6 +31,12 @@ public:
 
 	virtual bool CanInteract_Implementation(APawn* Interactor) override;
 	virtual FText GetInteractionName_Implementation() override;
+
+	UFUNCTION(BlueprintCallable, Category="NPC Base", meta=(DisplayName="Set NPC State"))
+	void SetNPCState(ENPCState InNPCState) { NPCState = InNPCState; }
+
+	UFUNCTION(BlueprintPure, Category="NPC Base", meta=(DisplayName="Get NPC State"))
+	ENPCState GetNPCState() const { return NPCState; }
 
 protected:
 	virtual void BeginPlay() override;
@@ -38,9 +54,13 @@ protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Dialogue")
 	bool bIsDialogueActive = false;
 
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="NPC Base")
+	ENPCState NPCState = ENPCState::StandingIdle;
+
 private:
 	UFUNCTION()
 	void HandleDialogueActiveChanged(bool bIsActive);
 
+	void UpdateInteractionWidgetText();
 	void CheckInteractionWidgetVisibilityDistance() const;
 };
