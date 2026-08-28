@@ -33,7 +33,7 @@ protected:
 	virtual bool IsFinishedInitializing() const override;
 
 	UGameSettingCollection* InitializeAudioSettings(ULocalPlayer* InLocalPlayer);
-	// UGameSettingCollection* InitializeVideoSettings(ULocalPlayer* InLocalPlayer);
+	UGameSettingCollection* InitializeVideoSettings(ULocalPlayer* InLocalPlayer);
 	// UGameSettingCollection* InitializeGameplaySettings(ULocalPlayer* InLocalPlayer);
 	// UGameSettingCollection* InitializeMouseAndKeyboardSettings(ULocalPlayer* InLocalPlayer);
 	// UGameSettingCollection* InitializeGamepadSettings(ULocalPlayer* InLocalPlayer);

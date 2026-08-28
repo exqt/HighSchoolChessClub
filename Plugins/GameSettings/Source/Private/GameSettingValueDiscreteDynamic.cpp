@@ -74,6 +74,11 @@ void UGameSettingValueDiscreteDynamic::SetValueFromString(FString InStringValue)
 void UGameSettingValueDiscreteDynamic::SetValueFromString(FString InStringValue, EGameSettingChangeReason Reason)
 {
 	check(Setter);
+	if (AreOptionsEqual(GetValueAsString(), InStringValue))
+	{
+		return;
+	}
+
 	Setter->SetValue(LocalPlayer, InStringValue);
 
 	NotifySettingChanged(Reason);

@@ -28,13 +28,16 @@ void UCCGameSettingRegistry::SaveChanges()
 	
 	if (UCCSettingsLocal* Settings = UCCSettingsLocal::Get())
 	{
-		Settings->SaveSettings();
+		Settings->ApplySettings(false);
 	}
 }
 
 void UCCGameSettingRegistry::OnInitialize(ULocalPlayer* InLocalPlayer)
 {
 	UCCLocalPlayer* CCLocalPlayer = Cast<UCCLocalPlayer>(InLocalPlayer);
+
+	VideoSettings = InitializeVideoSettings(CCLocalPlayer);
+	RegisterSetting(VideoSettings);
 
 	AudioSettings = InitializeAudioSettings(CCLocalPlayer);
 	RegisterSetting(AudioSettings);
@@ -45,10 +48,6 @@ bool UCCGameSettingRegistry::IsFinishedInitializing() const
 	return Super::IsFinishedInitializing();
 }
 
-// UGameSettingCollection* UCCGameSettingRegistry::InitializeVideoSettings(ULocalPlayer* InLocalPlayer)
-// {
-// }
-//
 // void UCCGameSettingRegistry::AddPerformanceStatPage(UGameSettingCollection* Screen, ULocalPlayer* InLocalPlayer)
 // {
 // }

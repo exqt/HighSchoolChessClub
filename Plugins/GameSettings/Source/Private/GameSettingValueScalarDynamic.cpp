@@ -199,6 +199,11 @@ void UGameSettingValueScalarDynamic::SetValue(double InValue, EGameSettingChange
 		InValue = FMath::Min(Maximum.GetValue(), InValue);
 	}
 
+	if (FMath::IsNearlyEqual(GetValue(), InValue))
+	{
+		return;
+	}
+
 	const FString StringValue = LexToString(InValue);
 	Setter->SetValue(LocalPlayer, StringValue);
 
