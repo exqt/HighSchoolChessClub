@@ -15,7 +15,7 @@ public:
 	virtual void EndTurn() override;
 
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Chess Bot")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="ChessBotParticipant")
 	FChessBotSettings BotSettings;
 
 private:

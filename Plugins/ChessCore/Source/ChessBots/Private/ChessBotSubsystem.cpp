@@ -3,6 +3,7 @@
 #include "ChessBotSubsystem.h"
 
 #include "Async/Async.h"
+#include "ChessMctsBot.h"
 #include "ChessRandomBot.h"
 
 namespace
@@ -11,6 +12,8 @@ namespace
 	{
 		switch (BotType)
 		{
+		case EChessBotType::Mcts:
+			return MakeUnique<FChessMctsBot>();
 		case EChessBotType::Random:
 		default:
 			return MakeUnique<FChessRandomBot>();
@@ -60,6 +63,22 @@ FGuid UChessBotSubsystem::RequestMove(const FString& Fen, const FChessBotSetting
 	SearchRequest.Fen.assign(FenUtf8.Get(), FenUtf8.Length());
 	SearchRequest.RandomSeed = Settings.RandomSeed != 0 ? static_cast<uint64>(Settings.RandomSeed) : static_cast<uint64>(GetTypeHash(RequestId));
 	SearchRequest.TimeLimitSeconds = Settings.TimeLimitSeconds;
+	SearchRequest.MctsSettings.IterationLimit = static_cast<uint64>(FMath::Max(0, Settings.MctsSettings.IterationLimit));
+	SearchRequest.MctsSettings.ExplorationConstant = FMath::Max(0.0f, Settings.MctsSettings.ExplorationConstant);
+	SearchRequest.MctsSettings.MaterialScoreScale = FMath::Max(0.001f, Settings.MctsSettings.MaterialScoreScale);
+	SearchRequest.MctsSettings.PawnValue = FMath::Max(0.0f, Settings.MctsSettings.PawnValue);
+	SearchRequest.MctsSettings.KnightValue = FMath::Max(0.0f, Settings.MctsSettings.KnightValue);
+	SearchRequest.MctsSettings.BishopValue = FMath::Max(0.0f, Settings.MctsSettings.BishopValue);
+	SearchRequest.MctsSettings.RookValue = FMath::Max(0.0f, Settings.MctsSettings.RookValue);
+	SearchRequest.MctsSettings.QueenValue = FMath::Max(0.0f, Settings.MctsSettings.QueenValue);
+	SearchRequest.MctsSettings.bLogSearch = Settings.MctsSettings.bLogSearch;
+	SearchRequest.MctsSettings.LogCandidateCount = FMath::Max(0, Settings.MctsSettings.LogCandidateCount);
+	SearchRequest.PreferredOpeningEcos.reserve(Settings.PreferredOpenings.Num());
+	for (const FString& Eco : Settings.PreferredOpenings)
+	{
+		const FTCHARToUTF8 EcoUtf8(*Eco);
+		SearchRequest.PreferredOpeningEcos.emplace_back(EcoUtf8.Get(), EcoUtf8.Length());
+	}
 
 	const EChessBotType BotType = Settings.BotType;
 	const TWeakObjectPtr<UChessBotSubsystem> WeakThis(this);
