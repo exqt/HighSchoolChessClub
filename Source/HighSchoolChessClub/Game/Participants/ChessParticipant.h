@@ -20,7 +20,12 @@ public:
 	UFUNCTION(BlueprintPure, Category="Chess Participant")
 	EChessPlayerPosition GetPosition() const { return Position; }
 
+	UFUNCTION(BlueprintPure, Category="ChessParticipant")
 	AChessMatch* GetMatch() const { return Match; }
+
+	UFUNCTION(BlueprintPure, Category="ChessParticipant")
+	bool IsWinner(EChessCoreGameResult GameResult) const;
+
 	AActor* GetPerformer() const { return Performer.Get(); }
 
 #pragma region Turn

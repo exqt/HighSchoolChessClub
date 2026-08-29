@@ -1,6 +1,7 @@
 #include "Game/ChessMatch.h"
 
 #include "ChessGameState.h"
+#include "Characters/NPC/NPCBase.h"
 #include "Game/Participants/ChessBotParticipant.h"
 #include "Game/ChessClockComponent.h"
 #include "Game/ChessDesk.h"
@@ -55,6 +56,10 @@ void AChessMatch::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if (PlayerBParticipant)
 	{
 		PlayerBParticipant->EndTurn();
+		if (ANPCBase* NPCPerformer = Cast<ANPCBase>(PlayerBParticipant->GetPerformer()))
+		{
+			NPCPerformer->SetChessParticipant(nullptr);
+		}
 	}
 	Super::EndPlay(EndPlayReason);
 }
@@ -84,6 +89,10 @@ UChessParticipant* AChessMatch::RegisterParticipant(const EChessPlayerPosition P
 
 	Participant = NewObject<UChessParticipant>(this, ClassToCreate);
 	Participant->Initialize(this, Position, Performer);
+	if (ANPCBase* NPCPerformer = Cast<ANPCBase>(Performer))
+	{
+		NPCPerformer->SetChessParticipant(Participant);
+	}
 	RefreshParticipantState();
 
 	return Participant;
@@ -100,6 +109,10 @@ bool AChessMatch::UnregisterParticipant(UChessParticipant* Participant)
 	}
 
 	Participant->EndTurn();
+	if (ANPCBase* NPCPerformer = Cast<ANPCBase>(Participant->GetPerformer()))
+	{
+		NPCPerformer->SetChessParticipant(nullptr);
+	}
 	RegisteredParticipant = nullptr;
 	RefreshParticipantState();
 

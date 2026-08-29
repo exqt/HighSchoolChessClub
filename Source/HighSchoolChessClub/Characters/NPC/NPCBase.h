@@ -9,6 +9,7 @@
 #include "NPCBase.generated.h"
 
 class UWidgetComponent;
+class UChessParticipant;
 
 UENUM(BlueprintType)
 enum class ENPCState : uint8
@@ -47,6 +48,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category="NPC Base")
 	void FinishChessMoveAnimation(int32 MoveId);
 
+	UFUNCTION(BlueprintPure, Category="NPCBase")
+	UChessParticipant* GetChessParticipant() const { return ActiveChessParticipant; }
+
+	void SetChessParticipant(UChessParticipant* InChessParticipant) { ActiveChessParticipant = InChessParticipant; }
+
 	FOnChessMoveAnimationFinished OnChessMoveAnimationFinished;
 
 protected:
@@ -67,6 +73,9 @@ protected:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="NPC Base")
 	ENPCState NPCState = ENPCState::StandingIdle;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="NPCBase")
+	TObjectPtr<UChessParticipant> ActiveChessParticipant;
 
 private:
 	UFUNCTION()
