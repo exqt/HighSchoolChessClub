@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
-#include "Game/ChessParticipantTypes.h"
+#include "Game/ChessGameTypes.h"
 #include "ChessParticipant.generated.h"
 
 class AActor;

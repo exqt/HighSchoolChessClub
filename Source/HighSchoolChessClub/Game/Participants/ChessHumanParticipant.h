@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "ChessCoreTypes.h"
-#include "Game/ChessParticipant.h"
+#include "ChessParticipant.h"
 #include "ChessHumanParticipant.generated.h"
 
 /* 사람의 입력과 체스판 선택 상태를 처리하는 Participant */

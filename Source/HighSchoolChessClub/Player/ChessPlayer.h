@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
-#include "Game/ChessParticipantTypes.h"
+#include "Game/ChessGameTypes.h"
 #include "Game/Interactable.h"
 #include "ChessPlayer.generated.h"
 

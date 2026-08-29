@@ -1,4 +1,4 @@
-#include "Game/ChessParticipant.h"
+#include "ChessParticipant.h"
 
 void UChessParticipant::Initialize(AChessMatch* InMatch, const EChessPlayerPosition InPosition, AActor* InPerformer) 
 {

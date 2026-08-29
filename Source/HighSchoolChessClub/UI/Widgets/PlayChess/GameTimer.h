@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Game/ChessParticipantTypes.h"
+#include "Game/ChessGameTypes.h"
 #include "GameTimer.generated.h"
 
 class UProgressBar;

@@ -33,6 +33,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Chess Piece|Tween")
 	void MovePieceTo(FVector TargetWorldPosition);
 
+	UFUNCTION(BlueprintCallable, Category="Chess Piece")
+	void MovePieceImmediately(FVector TargetWorldPosition);
+
+	UFUNCTION(BlueprintCallable, Category="Chess Piece")
+	void DetatchWithTween(FVector TargetWorldLocation, FRotator TargetWorldRotation, float Duration = 0.15f);
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnConstruction(const FTransform& Transform) override;

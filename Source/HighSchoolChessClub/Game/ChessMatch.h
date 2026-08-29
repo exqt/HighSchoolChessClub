@@ -4,7 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "ChessCoreTypes.h"
 #include "Game/ChessMatchSettings.h"
-#include "Game/ChessParticipantTypes.h"
+#include "Game/ChessGameTypes.h"
 #include "ChessMatch.generated.h"
 
 class AChessDesk;
@@ -37,8 +37,9 @@ public:
 	UFUNCTION(BlueprintPure, Category="Chess Match")
 	AChessDesk* GetDesk() const { return Desk; }
 
-	bool TrySubmitMove(UChessParticipant* Participant, const FChessCoreMove& Move);
+	bool TrySubmitMove(UChessParticipant* Participant, const FChessCoreMove& Move, EChessMoveVisualMode VisualMode = EChessMoveVisualMode::Tween);
 	bool TrySubmitMoveUci(UChessParticipant* Participant, const FString& UciMove);
+	bool FindLegalMoveUci(const FString& UciMove, FChessCoreMove& OutMove) const;
 	void GetLegalMovesFrom(FIntPoint Square, TArray<FChessCoreMove>& OutMoves) const;
 
 	/**

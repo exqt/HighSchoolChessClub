@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ChessCoreTypes.h"
+#include "Game/ChessGameTypes.h"
 #include "GameFramework/Actor.h"
 #include "ChessDesk.generated.h"
 
@@ -54,7 +54,8 @@ public:
 	void ShowPieceSelection(FIntPoint Square, const TArray<FIntPoint>& LegalDestinations);
 	void ClearPieceSelection(FIntPoint Square);
 	void RebuildPieceActors(const TArray<FChessCorePiece>& Pieces);
-	bool ApplyMoveToPieceActors(const FChessCoreMove& Move, const FChessCorePiece& MovingPiece, const FChessCorePiece& PieceAfterMove);
+	bool MakeMoveAnimationData(const FChessCoreMove& Move, const FChessCorePiece& MovingPiece, FChessMoveAnimationData& OutData) const;
+	bool ApplyMoveToPieceActors(const FChessCoreMove& Move, const FChessCorePiece& MovingPiece, const FChessCorePiece& PieceAfterMove, EChessMoveVisualMode VisualMode = EChessMoveVisualMode::Tween);
 
 protected:
 	virtual void BeginPlay() override;
@@ -97,8 +98,9 @@ private:
 	void RefreshCursorTransform();
 	void ShowLegalMoveCells(const TArray<FIntPoint>& Squares);
 	void ClearLegalMoveCells();
+	FVector SquareToWorldLocation(FIntPoint Square) const;
 	AChessPiece* SpawnPieceActor(const FChessCorePiece& Piece);
-	void MovePieceActorToSquare(AChessPiece* PieceActor, FIntPoint Square) const;
+	void MovePieceActorToSquare(AChessPiece* PieceActor, FIntPoint Square, EChessMoveVisualMode VisualMode) const;
 	void DestroyPieceActorAtSquare(FIntPoint Square);
 
 	const float SquareSize = 5.0f;

@@ -1,4 +1,4 @@
-#include "Game/ChessHumanParticipant.h"
+#include "ChessHumanParticipant.h"
 
 #include "Game/ChessDesk.h"
 #include "Game/ChessMatch.h"

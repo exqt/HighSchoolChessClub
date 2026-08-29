@@ -1,5 +1,6 @@
 #include "Game/ChessDesk.h"
 
+#include "Game/ChessGameTypes.h"
 #include "Game/ChessPiece.h"
 #include "Player/ChessPlayer.h"
 #include "Components/InstancedStaticMeshComponent.h"
@@ -80,11 +81,7 @@ bool AChessDesk::SetCursorSquare(FIntPoint NewSquare)
 
 FVector AChessDesk::GetCursorWorldLocation() const
 {
-	const FVector BoardLocation(
-		static_cast<float>(CursorSquare.X) * SquareSize,
-		-static_cast<float>(CursorSquare.Y) * SquareSize,
-		0.0f);
-	return BoardOrigin->GetComponentTransform().TransformPosition(BoardLocation);
+	return SquareToWorldLocation(CursorSquare);
 }
 
 void AChessDesk::SetCursorVisible(const bool bVisible)
@@ -161,10 +158,30 @@ void AChessDesk::RebuildPieceActors(const TArray<FChessCorePiece>& Pieces)
 	}
 }
 
-bool AChessDesk::ApplyMoveToPieceActors(
-	const FChessCoreMove& Move,
-	const FChessCorePiece& MovingPiece,
-	const FChessCorePiece& PieceAfterMove)
+bool AChessDesk::MakeMoveAnimationData(const FChessCoreMove& Move, const FChessCorePiece& MovingPiece, FChessMoveAnimationData& OutData) const
+{
+	const FIntPoint FromSquare(Move.From.File, Move.From.Rank);
+	const FIntPoint ToSquare(Move.To.File, Move.To.Rank);
+
+	OutData = {};
+	OutData.FromSquare = FromSquare;
+	OutData.ToSquare = ToSquare;
+	OutData.PieceActor = PieceActorsBySquare.FindRef(FromSquare);
+	OutData.FromWS = SquareToWorldLocation(FromSquare);
+	OutData.ToWS = SquareToWorldLocation(ToSquare);
+	OutData.Promotion = Move.Promotion;
+	OutData.CapturedSquare = ToSquare;
+
+	if (MovingPiece.Type == EChessCorePieceType::Pawn && FromSquare.X != ToSquare.X && !PieceActorsBySquare.Contains(ToSquare))
+	{
+		OutData.CapturedSquare = FIntPoint(ToSquare.X, FromSquare.Y);
+	}
+
+	OutData.CapturedPieceActor = PieceActorsBySquare.FindRef(OutData.CapturedSquare);
+	return OutData.PieceActor != nullptr;
+}
+
+bool AChessDesk::ApplyMoveToPieceActors(const FChessCoreMove& Move, const FChessCorePiece& MovingPiece, const FChessCorePiece& PieceAfterMove, const EChessMoveVisualMode VisualMode)
 {
 	const FIntPoint FromSquare(Move.From.File, Move.From.Rank);
 	const FIntPoint ToSquare(Move.To.File, Move.To.Rank);
@@ -184,7 +201,7 @@ bool AChessDesk::ApplyMoveToPieceActors(
 	}
 
 	PieceActorsBySquare.Remove(FromSquare);
-	MovePieceActorToSquare(MovingActor, ToSquare);
+	MovePieceActorToSquare(MovingActor, ToSquare, VisualMode);
 	PieceActorsBySquare.Add(ToSquare, MovingActor);
 
 	if (MovingPiece.Type == EChessCorePieceType::King && FMath::Abs(ToSquare.X - FromSquare.X) == 2)
@@ -199,7 +216,7 @@ bool AChessDesk::ApplyMoveToPieceActors(
 		}
 
 		PieceActorsBySquare.Remove(RookFromSquare);
-		MovePieceActorToSquare(RookActor, RookToSquare);
+		MovePieceActorToSquare(RookActor, RookToSquare, VisualMode);
 		PieceActorsBySquare.Add(RookToSquare, RookActor);
 	}
 
@@ -227,11 +244,7 @@ AChessPiece* AChessDesk::SpawnPieceActor(const FChessCorePiece& Piece)
 	}
 
 	const FIntPoint Square(Piece.Square.File, Piece.Square.Rank);
-	const FVector BoardLocation(
-		static_cast<float>(Square.X) * SquareSize,
-		-static_cast<float>(Square.Y) * SquareSize,
-		0.0f);
-	const FVector WorldLocation = BoardOrigin->GetComponentTransform().TransformPosition(BoardLocation);
+	const FVector WorldLocation = SquareToWorldLocation(Square);
 	const FTransform SpawnTransform(BoardOrigin->GetComponentQuat(), WorldLocation);
 
 	FActorSpawnParameters SpawnParameters;
@@ -250,13 +263,22 @@ AChessPiece* AChessDesk::SpawnPieceActor(const FChessCorePiece& Piece)
 	return PieceActor;
 }
 
-void AChessDesk::MovePieceActorToSquare(AChessPiece* PieceActor, const FIntPoint Square) const
+FVector AChessDesk::SquareToWorldLocation(const FIntPoint Square) const
 {
-	const FVector BoardLocation(
-		static_cast<float>(Square.X) * SquareSize,
-		-static_cast<float>(Square.Y) * SquareSize,
-		0.0f);
-	PieceActor->MovePieceTo(BoardOrigin->GetComponentTransform().TransformPosition(BoardLocation));
+	const FVector BoardLocation(static_cast<float>(Square.X) * SquareSize, -static_cast<float>(Square.Y) * SquareSize, 0.0f);
+	return BoardOrigin->GetComponentTransform().TransformPosition(BoardLocation);
+}
+
+void AChessDesk::MovePieceActorToSquare(AChessPiece* PieceActor, const FIntPoint Square, const EChessMoveVisualMode VisualMode) const
+{
+	const FVector WorldLocation = SquareToWorldLocation(Square);
+	if (VisualMode == EChessMoveVisualMode::Immediate)
+	{
+		PieceActor->MovePieceImmediately(WorldLocation);
+		return;
+	}
+
+	PieceActor->MovePieceTo(WorldLocation);
 }
 
 void AChessDesk::DestroyPieceActorAtSquare(const FIntPoint Square)

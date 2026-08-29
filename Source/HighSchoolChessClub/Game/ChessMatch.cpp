@@ -1,11 +1,11 @@
 #include "Game/ChessMatch.h"
 
 #include "ChessGameState.h"
-#include "Game/ChessBotParticipant.h"
+#include "Game/Participants/ChessBotParticipant.h"
 #include "Game/ChessClockComponent.h"
 #include "Game/ChessDesk.h"
-#include "Game/ChessHumanParticipant.h"
-#include "Game/ChessParticipant.h"
+#include "Game/Participants/ChessHumanParticipant.h"
+#include "Game/Participants/ChessParticipant.h"
 
 AChessMatch::AChessMatch()
 {
@@ -150,7 +150,7 @@ void AChessMatch::NotifyHumanPlayerUnpossessed(UChessHumanParticipant* Participa
 	}
 }
 
-bool AChessMatch::TrySubmitMove(UChessParticipant* Participant, const FChessCoreMove& Move)
+bool AChessMatch::TrySubmitMove(UChessParticipant* Participant, const FChessCoreMove& Move, const EChessMoveVisualMode VisualMode)
 {
 	FChessCorePiece MovingPiece;
 	if (!GetPieceAtSquare(FIntPoint(Move.From.File, Move.From.Rank), MovingPiece))
@@ -166,7 +166,7 @@ bool AChessMatch::TrySubmitMove(UChessParticipant* Participant, const FChessCore
 
 	FChessCorePiece PieceAfterMove;
 	GetPieceAtSquare(FIntPoint(AppliedMove.To.File, AppliedMove.To.Rank), PieceAfterMove);
-	Desk->ApplyMoveToPieceActors(AppliedMove, MovingPiece, PieceAfterMove);
+	Desk->ApplyMoveToPieceActors(AppliedMove, MovingPiece, PieceAfterMove, VisualMode);
 	OnBoardStateChanged.Broadcast(ChessState);
 
 	Participant->EndTurn();
@@ -186,6 +186,12 @@ bool AChessMatch::TrySubmitMove(UChessParticipant* Participant, const FChessCore
 
 bool AChessMatch::TrySubmitMoveUci(UChessParticipant* Participant, const FString& UciMove)
 {
+	FChessCoreMove Move;
+	return FindLegalMoveUci(UciMove, Move) && TrySubmitMove(Participant, Move);
+}
+
+bool AChessMatch::FindLegalMoveUci(const FString& UciMove, FChessCoreMove& OutMove) const
+{
 	TArray<FChessCoreMove> LegalMoves;
 	ChessState->GetLegalMoves(LegalMoves);
 	const FChessCoreMove* Move = LegalMoves.FindByPredicate(
@@ -194,7 +200,13 @@ bool AChessMatch::TrySubmitMoveUci(UChessParticipant* Participant, const FString
 			return Candidate.Uci == UciMove;
 		});
 
-	return Move && TrySubmitMove(Participant, *Move);
+	if (!Move)
+	{
+		return false;
+	}
+
+	OutMove = *Move;
+	return true;
 }
 
 void AChessMatch::GetLegalMovesFrom(const FIntPoint Square, TArray<FChessCoreMove>& OutMoves) const

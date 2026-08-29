@@ -12,7 +12,7 @@
 #include "InputActionValue.h"
 #include "InputCoreTypes.h"
 #include "Game/ChessDesk.h"
-#include "Game/ChessHumanParticipant.h"
+#include "Game/Participants/ChessHumanParticipant.h"
 #include "Game/ChessMatch.h"
 #include "Game/PositionTweenComponent.h"
 #include "Player/FirstPersonPlayer.h"

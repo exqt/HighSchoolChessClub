@@ -67,6 +67,22 @@ void AChessPiece::MovePieceTo(const FVector TargetWorldPosition)
 	PositionTween->TweenToPosition(RestingWorldPosition, MoveTweenDuration);
 }
 
+void AChessPiece::MovePieceImmediately(const FVector TargetWorldPosition)
+{
+	PositionTween->StopPositionTween();
+	RestingWorldPosition = TargetWorldPosition;
+	bIsLifted = false;
+	SetActorLocation(TargetWorldPosition);
+}
+
+void AChessPiece::DetatchWithTween(const FVector TargetWorldLocation, const FRotator TargetWorldRotation, const float Duration)
+{
+	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	RestingWorldPosition = TargetWorldLocation;
+	bIsLifted = false;
+	PositionTween->TweenToTransform(TargetWorldLocation, TargetWorldRotation, Duration);
+}
+
 void AChessPiece::ApplyPieceColor()
 {
 	UMaterialInterface* Material = nullptr;

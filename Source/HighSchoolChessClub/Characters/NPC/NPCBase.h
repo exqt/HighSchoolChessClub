@@ -5,6 +5,7 @@
 #include "GameFramework/Character.h"
 #include "GameplayTagContainer.h"
 #include "Dialogue/CCCharacterData.h"
+#include "Game/ChessGameTypes.h"
 #include "NPCBase.generated.h"
 
 class UWidgetComponent;
@@ -18,6 +19,8 @@ enum class ENPCState : uint8
 	Walking,
 	Playing
 };
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnChessMoveAnimationFinished, int32);
 
 UCLASS(Blueprintable)
 class HIGHSCHOOLCHESSCLUB_API ANPCBase : public ACharacter, public IInteractable
@@ -37,6 +40,14 @@ public:
 
 	UFUNCTION(BlueprintPure, Category="NPC Base", meta=(DisplayName="Get NPC State"))
 	ENPCState GetNPCState() const { return NPCState; }
+	
+	UFUNCTION(BlueprintImplementableEvent, Category="NPC Base")
+	void StartChessMoveAnimation(const FChessMoveAnimationData& MoveData);
+
+	UFUNCTION(BlueprintCallable, Category="NPC Base")
+	void FinishChessMoveAnimation(int32 MoveId);
+
+	FOnChessMoveAnimationFinished OnChessMoveAnimationFinished;
 
 protected:
 	virtual void BeginPlay() override;

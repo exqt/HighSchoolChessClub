@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "ChessBotTypes.h"
-#include "Game/ChessParticipant.h"
+#include "ChessParticipant.h"
 #include "ChessBotParticipant.generated.h"
 
 UCLASS(BlueprintType, Blueprintable)
@@ -21,6 +21,10 @@ protected:
 private:
 	UFUNCTION()
 	void OnMoveReady(const FChessBotResult& Result);
+	void HandleChessMoveAnimationFinished(int32 MoveId);
 
 	FGuid PendingRequestId;
+	FChessCoreMove PendingMove;
+	int32 PendingMoveId = INDEX_NONE;
+	int32 LastMoveId = 0;
 };

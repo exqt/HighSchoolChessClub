@@ -63,6 +63,11 @@ FText ANPCBase::GetInteractionName_Implementation()
 	return NSLOCTEXT("Interaction", "Talk", "말 걸기");
 }
 
+void ANPCBase::FinishChessMoveAnimation(const int32 MoveId)
+{
+	OnChessMoveAnimationFinished.Broadcast(MoveId);
+}
+
 void ANPCBase::HandleDialogueActiveChanged(bool bIsActive)
 {
 	bIsDialogueActive = bIsActive;
