@@ -3,6 +3,15 @@
 #include "CoreMinimal.h"
 #include "CCCharacterData.generated.h"
 
+USTRUCT(BlueprintType)
+struct FCCSmallTalkDialogue
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="CC Small Talk Dialogue")
+	TArray<FText> Lines;
+};
+
 UCLASS(BlueprintType)
 class HIGHSCHOOLCHESSCLUB_API UCCCharacterData : public UPrimaryDataAsset
 {
@@ -19,4 +28,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character")
 	FText Association;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Character")
+	TArray<FCCSmallTalkDialogue> SmallTalkDialogues;
 };
