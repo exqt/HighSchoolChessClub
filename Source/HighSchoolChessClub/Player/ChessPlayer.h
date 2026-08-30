@@ -191,6 +191,9 @@ private:
 	void CursorMoveInput(const FInputActionValue& Value);
 	FIntPoint ConvertInputToBoardDelta(FIntPoint InputDelta) const;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chess Player", meta=(AllowPrivateAccess="true"))
+	EChessPlayerPosition InvertedInputPlayerPosition = EChessPlayerPosition::PlayerA;
+
 	/* 현재 마우스 포인터 아래의 체스판 칸을 찾아 HumanParticipant의 논리 커서를 갱신한다. */
 	void UpdateCursorFromMouse() const;
 #pragma endregion

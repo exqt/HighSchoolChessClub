@@ -10,7 +10,6 @@
 #include "GameFramework/PlayerController.h"
 #include "InputAction.h"
 #include "InputActionValue.h"
-#include "InputCoreTypes.h"
 #include "Game/ChessDesk.h"
 #include "Game/Participants/ChessHumanParticipant.h"
 #include "Game/ChessMatch.h"
@@ -273,10 +272,7 @@ void AChessPlayer::StickLookEnded(const FInputActionValue& InputActionValue)
 
 void AChessPlayer::SelectInput(const FInputActionValue& InputActionValue)
 {
-	APlayerController* PlayerController = Cast<APlayerController>(GetController());
-
-	// 컨트롤러가 아닌 마우스를 사용하여 클릭하였다면
-	if (PlayerController->IsInputKeyDown(EKeys::LeftMouseButton))
+	if (CommonInputSubsystem->GetCurrentInputType() == ECommonInputType::MouseAndKeyboard)
 	{
 		UpdateCursorFromMouse();
 	}
@@ -292,7 +288,7 @@ void AChessPlayer::CancelInput(const FInputActionValue& InputActionValue)
 
 FIntPoint AChessPlayer::ConvertInputToBoardDelta(const FIntPoint InputDelta) const
 {
-	if (PlayerPosition == EChessPlayerPosition::PlayerB)
+	if (PlayerPosition == InvertedInputPlayerPosition)
 	{
 		return FIntPoint(-InputDelta.X, -InputDelta.Y);
 	}
