@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "CommonActivatableWidget.h"
 #include "Dialogue/CCCharacterData.h"
+#include "Engine/DataTable.h"
+#include "Input/UIActionBindingHandle.h"
 #include "UI/Core/CCButtonBase.h"
 #include "DialogueScreen.generated.h"
 
@@ -53,12 +55,17 @@ public:
 	FOnDialogueSequenceFinished OnDialogueSequenceFinished;
 
 protected:
+	virtual void NativeOnInitialized() override;
 	virtual void NativeConstruct() override;
 	virtual void NativeOnDeactivated() override;
 	virtual UWidget* NativeGetDesiredFocusTarget() const override;
-	virtual FReply NativeOnMouseButtonDown( const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+
+	UPROPERTY(EditDefaultsOnly, Category = "DialogueScreen", meta = (RowType = "/Script/CommonUI.CommonInputActionDataBase"))
+	FDataTableRowHandle AdvanceInputActionData;
 
 private:
+	void RegisterAdvanceActionBinding();
+	void UnregisterAdvanceActionBinding();
 	void DisplayCurrentMessage();
 	void FinishDialogueSequence();
 
@@ -71,6 +78,7 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UCCButtonBase> DesiredFocusButton;
 
+	FUIActionBindingHandle AdvanceActionBindingHandle;
 	TArray<FDialogueMessage> Messages;
 	int32 CurrentMessageIndex = INDEX_NONE;
 };

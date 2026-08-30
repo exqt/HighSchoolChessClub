@@ -6,6 +6,8 @@
 #include "Blueprint/UserWidget.h"
 #include "DialogueWidget.generated.h"
 
+struct FUIActionBindingHandle;
+class UCommonActionWidget;
 class USoundBase;
 class UCommonTextBlock;
 class URichTextBlock;
@@ -18,6 +20,9 @@ class HIGHSCHOOLCHESSCLUB_API UDialogueWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	void SetAdvanceActionBinding(FUIActionBindingHandle InAdvanceActionBindingHandle);
+	void SetAdvanceActionHidden(bool bHidden);
+
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
 	void PresentMessage(const FText& InCharacterName, const FText& InAssociation, const FText& InMessage);
 
@@ -47,6 +52,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UCommonTextBlock> SpeakerAssociation;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UCommonActionWidget> AdvanceActionWidget;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue|Typing", meta = (ClampMin = "0.001", Units = "s"))
 	float CharacterInterval = 0.05f;

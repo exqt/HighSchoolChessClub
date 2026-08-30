@@ -2,11 +2,23 @@
 
 #include "UI/Widgets/Dialogue/DialogueWidget.h"
 
+#include "CommonActionWidget.h"
 #include "CommonTextBlock.h"
+#include "Input/UIActionBindingHandle.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 #include "TimerManager.h"
 #include "Components/RichTextBlock.h"
+
+void UDialogueWidget::SetAdvanceActionBinding(FUIActionBindingHandle InAdvanceActionBindingHandle)
+{
+	AdvanceActionWidget->SetInputActionBinding(InAdvanceActionBindingHandle);
+}
+
+void UDialogueWidget::SetAdvanceActionHidden(const bool bHidden)
+{
+	AdvanceActionWidget->SetHidden(bHidden);
+}
 
 void UDialogueWidget::PresentMessage(const FText& InCharacterName, const FText& InAssociation, const FText& InMessage) 
 {

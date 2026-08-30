@@ -2,9 +2,15 @@
 
 #include "CommonButtonBase.h"
 #include "Components/DynamicEntryBox.h"
-#include "InputCoreTypes.h"
+#include "Input/CommonUIInputTypes.h"
 #include "UI/Core/CCButtonBase.h"
 #include "UI/Widgets/Dialogue/DialogueWidget.h"
+
+void UDialogueScreen::NativeOnInitialized()
+{
+	Super::NativeOnInitialized();
+	RegisterAdvanceActionBinding();
+}
 
 void UDialogueScreen::NativeConstruct()
 {
@@ -24,19 +30,6 @@ void UDialogueScreen::NativeOnDeactivated()
 UWidget* UDialogueScreen::NativeGetDesiredFocusTarget() const
 {
 	return DesiredFocusButton ? DesiredFocusButton.Get() : Super::NativeGetDesiredFocusTarget();
-}
-
-FReply UDialogueScreen::NativeOnMouseButtonDown(
-	const FGeometry& InGeometry,
-	const FPointerEvent& InMouseEvent)
-{
-	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton || InMouseEvent.IsTouchEvent())
-	{
-		AdvanceDialogue();
-		return FReply::Handled();
-	}
-
-	return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
 }
 
 void UDialogueScreen::PresentDialogue(const TArray<FDialogueMessage>& InMessages)
@@ -74,6 +67,8 @@ void UDialogueScreen::AdvanceDialogue()
 bool UDialogueScreen::ShowChoices(const TArray<FText>& InChoices)
 {
 	ClearChoices();
+	UnregisterAdvanceActionBinding();
+	DialogueContent->SetAdvanceActionHidden(true);
 
 	DynamicEntryBox->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 
@@ -88,6 +83,8 @@ bool UDialogueScreen::ShowChoices(const TArray<FText>& InChoices)
 			{
 				DesiredFocusButton = nullptr;
 				DynamicEntryBox->SetVisibility(ESlateVisibility::Collapsed);
+				RegisterAdvanceActionBinding();
+				DialogueContent->SetAdvanceActionHidden(false);
 				OnChoiceSelected.Broadcast(ChoiceIndex, ChoiceText);
 			});
 
@@ -104,12 +101,16 @@ bool UDialogueScreen::ShowChoices(const TArray<FText>& InChoices)
 	}
 
 	DynamicEntryBox->SetVisibility(ESlateVisibility::Collapsed);
+	RegisterAdvanceActionBinding();
+	DialogueContent->SetAdvanceActionHidden(false);
 	return false;
 }
 
 void UDialogueScreen::ClearChoices()
 {
 	DesiredFocusButton = nullptr;
+	RegisterAdvanceActionBinding();
+	DialogueContent->SetAdvanceActionHidden(false);
 	DynamicEntryBox->Reset<UCCButtonBase>(
 		[](UCCButtonBase& ExistingButton)
 		{
@@ -122,6 +123,28 @@ void UDialogueScreen::ClearChoices()
 void UDialogueScreen::SkipTyping()
 {
 	DialogueContent->SkipTyping();
+}
+
+void UDialogueScreen::RegisterAdvanceActionBinding()
+{
+	if (AdvanceActionBindingHandle.IsValid())
+	{
+		return;
+	}
+
+	AdvanceActionBindingHandle = RegisterUIActionBinding(FBindUIActionArgs(AdvanceInputActionData, false, FSimpleDelegate::CreateUObject(this, &ThisClass::AdvanceDialogue)));
+	DialogueContent->SetAdvanceActionBinding(AdvanceActionBindingHandle);
+}
+
+void UDialogueScreen::UnregisterAdvanceActionBinding()
+{
+	if (!AdvanceActionBindingHandle.IsValid())
+	{
+		return;
+	}
+
+	RemoveActionBinding(AdvanceActionBindingHandle);
+	AdvanceActionBindingHandle.Unregister();
 }
 
 void UDialogueScreen::DisplayCurrentMessage()
