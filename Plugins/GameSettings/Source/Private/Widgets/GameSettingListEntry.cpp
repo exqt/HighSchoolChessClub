@@ -10,6 +10,7 @@
 #include "GameSettingCollection.h"
 #include "GameSettingValueDiscrete.h"
 #include "GameSettingValueScalar.h"
+#include "HAL/PlatformTime.h"
 #include "Widgets/Misc/GameSettingRotator.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(GameSettingListEntry)
@@ -247,6 +248,7 @@ void UGameSettingListEntrySetting_Scalar::NativeOnEntryReleased()
 	Super::NativeOnEntryReleased();
 
 	ScalarSetting = nullptr;
+	LastUserValueChangedTime = 0.0;
 }
 
 void UGameSettingListEntrySetting_Scalar::HandleSliderValueChanged(float Value)
@@ -255,13 +257,22 @@ void UGameSettingListEntrySetting_Scalar::HandleSliderValueChanged(float Value)
 
 	if (ensure(ScalarSetting))
 	{
+		const double PreviousValue = ScalarSetting->GetValue();
 		ScalarSetting->SetValueNormalized(Value);
+		const double CurrentValue = ScalarSetting->GetValue();
 		Value = ScalarSetting->GetValueNormalized();
 
 		Slider_SettingValue->SetValue(Value);
 		Text_SettingValue->SetText(ScalarSetting->GetFormattedText());
 
 		OnValueChanged(Value);
+
+		const double CurrentTime = FPlatformTime::Seconds();
+		if (!FMath::IsNearlyEqual(PreviousValue, CurrentValue) && CurrentTime - LastUserValueChangedTime >= UserValueChangedInterval)
+		{
+			LastUserValueChangedTime = CurrentTime;
+			OnUserValueChanged(Value);
+		}
 	}
 }
 

@@ -36,6 +36,7 @@ UGameSettingCollection* UCCGameSettingRegistry::InitializeAudioSettings(ULocalPl
 			Setting->SetDynamicGetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(GetOverallVolume));
 			Setting->SetDynamicSetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(SetOverallVolume));
 			Setting->SetDefaultValue(GetDefault<UCCSettingsLocal>()->GetOverallVolume());
+			Setting->SetSourceRangeAndStep(TRange<double>(0.0, 1.0), 0.1);
 			Setting->SetDisplayFormat(UGameSettingValueScalarDynamic::ZeroToOnePercent);
 
 			Setting->AddEditCondition(FWhenPlayingAsPrimaryPlayer::Get());
@@ -52,6 +53,7 @@ UGameSettingCollection* UCCGameSettingRegistry::InitializeAudioSettings(ULocalPl
 			Setting->SetDynamicGetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(GetMusicVolume));
 			Setting->SetDynamicSetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(SetMusicVolume));
 			Setting->SetDefaultValue(GetDefault<UCCSettingsLocal>()->GetMusicVolume());
+			Setting->SetSourceRangeAndStep(TRange<double>(0.0, 1.0), 0.1);
 			Setting->SetDisplayFormat(UGameSettingValueScalarDynamic::ZeroToOnePercent);
 
 			Setting->AddEditCondition(FWhenPlayingAsPrimaryPlayer::Get());
@@ -67,6 +69,7 @@ UGameSettingCollection* UCCGameSettingRegistry::InitializeAudioSettings(ULocalPl
 			Setting->SetDynamicGetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(GetSFXVolume));
 			Setting->SetDynamicSetter(GET_LOCAL_SETTINGS_FUNCTION_PATH(SetSFXVolume));
 			Setting->SetDefaultValue(GetDefault<UCCSettingsLocal>()->GetSFXVolume());
+			Setting->SetSourceRangeAndStep(TRange<double>(0.0, 1.0), 0.1);
 			Setting->SetDisplayFormat(UGameSettingValueScalarDynamic::ZeroToOnePercent);
 
 			Setting->AddEditCondition(FWhenPlayingAsPrimaryPlayer::Get());

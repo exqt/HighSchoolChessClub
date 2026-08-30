@@ -159,6 +159,9 @@ protected:
 	UE_API void OnValueChanged(float Value);
 
 	UFUNCTION(BlueprintImplementableEvent)
+	UE_API void OnUserValueChanged(float Value);
+
+	UFUNCTION(BlueprintImplementableEvent)
 	UE_API void OnDefaultValueChanged(float DefaultValue);
 
 	UE_API virtual void RefreshEditableState(const FGameSettingEditableState& InEditableState) override;
@@ -166,6 +169,11 @@ protected:
 protected:
 	UPROPERTY()
 	TObjectPtr<UGameSettingValueScalar> ScalarSetting;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameSettingListEntrySetting_Scalar")
+	float UserValueChangedInterval = 0.1f;
+
+	double LastUserValueChangedTime = 0.0;
 
 private:	// Bound Widgets
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, BlueprintProtected = true, AllowPrivateAccess = true))

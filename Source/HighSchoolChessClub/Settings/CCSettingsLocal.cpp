@@ -202,7 +202,8 @@ void UCCSettingsLocal::SetVolumeForControlBus(USoundControlBus* InSoundControlBu
 			UpdatedMixStageArray.Add(UpdatedControlBusMixStage);
 
 			// Modify the matching bus Mix Stage parameters on the User Control Bus Mix
-			UAudioModulationStatics::UpdateMix(AudioWorld, ControlBusMix, UpdatedMixStageArray);
+			const float FadeTime = FMath::IsNearlyZero(InVolume) ? 0.0f : 0.01f;
+			UAudioModulationStatics::UpdateMix(AudioWorld, ControlBusMix, UpdatedMixStageArray, FadeTime);
 		}
 	}
 }
