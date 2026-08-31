@@ -3,8 +3,15 @@
 
 #include "InteractionComponent.h"
 
-#include "IMediaControls.h"
+#include "Engine/OverlapResult.h"
+#include "Engine/World.h"
 #include "Interactable.h"
+#include "InteractionWidgetComponent.h"
+
+namespace
+{
+	constexpr ECollisionChannel ChairDeskObjectChannel = ECC_GameTraceChannel1;
+}
 
 
 // Sets default values for this component's properties
@@ -29,10 +36,8 @@ void UInteractionComponent::BeginPlay()
 
 
 // Called every frame
-void UInteractionComponent::TickComponent(
-	float DeltaTime, ELevelTick TickType,
-	FActorComponentTickFunction* ThisTickFunction
-) {
+void UInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	CheckInteractable();	
@@ -73,30 +78,43 @@ void UInteractionComponent::CheckInteractable()
 
 	Controller->GetPlayerViewPoint(ViewLocation, ViewRotation);
 
-	const FVector TraceStart = ViewLocation;
-	const FVector TraceEnd =
-		TraceStart + ViewRotation.Vector() * InteractionDistance;
-
-	FHitResult Hit;
-
+	TArray<FOverlapResult> OverlapResults;
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(OwnerPawn);
+	FCollisionObjectQueryParams ObjectQueryParams;
+	ObjectQueryParams.AddObjectTypesToQuery(ChairDeskObjectChannel);
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_Pawn);
+	GetWorld()->OverlapMultiByObjectType(OverlapResults, ViewLocation, FQuat::Identity, ObjectQueryParams, FCollisionShape::MakeSphere(InteractionDistance), Params);
 
-	const bool IsHit = GetWorld()->LineTraceSingleByChannel(
-		Hit,
-		TraceStart,
-		TraceEnd,
-		ECC_Visibility,
-		Params
-	);
-	
-	if (!IsHit) return SetCurrentInteractable(nullptr);
+	AActor* BestInteractable = nullptr;
+	float BestDot = MinimumViewDot;
+	float BestDistance = InteractionDistance;
+	TSet<AActor*> CheckedActors;
 
-	AActor* HitActor = Hit.GetActor();
+	for (const FOverlapResult& Overlap : OverlapResults)
+	{
+		AActor* Candidate = Overlap.GetActor();
+		if (!IsValid(Candidate) || CheckedActors.Contains(Candidate)) continue;
+		CheckedActors.Add(Candidate);
+		if (!Candidate->GetClass()->ImplementsInterface(UInteractable::StaticClass()) || !IInteractable::Execute_CanInteract(Candidate, OwnerPawn)) continue;
 
-	if (HitActor == nullptr || !HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()) || !IInteractable::Execute_CanInteract(HitActor, OwnerPawn)) return SetCurrentInteractable(nullptr);
+		const UInteractionWidgetComponent* InteractionWidget = Candidate->FindComponentByClass<UInteractionWidgetComponent>();
+		const FVector TargetLocation = InteractionWidget ? InteractionWidget->GetComponentLocation() : Candidate->GetActorLocation();
+		const FVector DirectionToCandidate = TargetLocation - ViewLocation;
+		const float Distance = DirectionToCandidate.Size();
+		if (Distance <= UE_SMALL_NUMBER || Distance > InteractionDistance) continue;
 
-	return SetCurrentInteractable(HitActor);
+		const float ViewDot = FVector::DotProduct(ViewRotation.Vector(), DirectionToCandidate / Distance);
+		if (ViewDot < MinimumViewDot) continue;
+		if (ViewDot > BestDot || FMath::IsNearlyEqual(ViewDot, BestDot) && Distance < BestDistance)
+		{
+			BestInteractable = Candidate;
+			BestDot = ViewDot;
+			BestDistance = Distance;
+		}
+	}
+
+	SetCurrentInteractable(BestInteractable);
 }
 
 void UInteractionComponent::SetCurrentInteractable(AActor* NewCurrentInteractable)
@@ -107,6 +125,7 @@ void UInteractionComponent::SetCurrentInteractable(AActor* NewCurrentInteractabl
 	
 	if (CurrentInteractable != nullptr)
 	{
+		if (UInteractionWidgetComponent* InteractionWidget = CurrentInteractable->FindComponentByClass<UInteractionWidgetComponent>()) InteractionWidget->SetInteractionHovered(false);
 		IInteractable::Execute_OnInteractionUnhover(CurrentInteractable, OwnerPawn);
 		OnInteractionUnhover.Broadcast(CurrentInteractable);
 	}
@@ -115,6 +134,7 @@ void UInteractionComponent::SetCurrentInteractable(AActor* NewCurrentInteractabl
 
 	if (CurrentInteractable != nullptr)
 	{
+		if (UInteractionWidgetComponent* InteractionWidget = CurrentInteractable->FindComponentByClass<UInteractionWidgetComponent>()) InteractionWidget->SetInteractionHovered(true);
 		IInteractable::Execute_OnInteractionHover(CurrentInteractable, OwnerPawn);
 		OnInteractionHover.Broadcast(CurrentInteractable);
 	}

@@ -9,7 +9,7 @@
 #include "Game/ChessHandAnimation.h"
 #include "NPCBase.generated.h"
 
-class UWidgetComponent;
+class UInteractionWidgetComponent;
 class UChessBotParticipant;
 class UChessParticipant;
 
@@ -30,8 +30,6 @@ class HIGHSCHOOLCHESSCLUB_API ANPCBase : public ACharacter, public IInteractable
 
 public:
 	ANPCBase();
-
-	virtual void Tick(float DeltaSeconds) override;
 
 	virtual bool CanInteract_Implementation(APawn* Interactor) override;
 	virtual FText GetInteractionName_Implementation() override;
@@ -62,11 +60,8 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
-	TObjectPtr<UWidgetComponent> InteractionWidget;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (ClampMin = "0.0", Units = "cm"))
-	float InteractionWidgetVisibilityDistance = 140.0f;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="NPC Base")
+	TObjectPtr<UInteractionWidgetComponent> InteractionWidget;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character")
 	TSoftObjectPtr<UCCCharacterData> CharacterData;
@@ -86,7 +81,4 @@ protected:
 private:
 	UFUNCTION()
 	void HandleDialogueActiveChanged(bool bIsActive);
-
-	void UpdateInteractionWidgetText();
-	void CheckInteractionWidgetVisibilityDistance() const;
 };

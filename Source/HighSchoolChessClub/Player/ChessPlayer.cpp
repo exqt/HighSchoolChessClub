@@ -13,6 +13,7 @@
 #include "Game/ChessDesk.h"
 #include "Game/Participants/ChessHumanParticipant.h"
 #include "Game/ChessMatchComponent.h"
+#include "Game/InteractionWidgetComponent.h"
 #include "Game/PositionTweenComponent.h"
 #include "Player/FirstPersonPlayer.h"
 #include "Player/FirstPersonPlayerController.h"
@@ -36,6 +37,11 @@ AChessPlayer::AChessPlayer()
 	SeatAnchor->SetupAttachment(SceneRoot);
 
 	PositionTween = CreateDefaultSubobject<UPositionTweenComponent>(TEXT("Position Tween"));
+
+	InteractionWidget = CreateDefaultSubobject<UInteractionWidgetComponent>(TEXT("InteractionWidgetComponent"));
+	InteractionWidget->SetupAttachment(SceneRoot);
+	InteractionWidget->SetRelativeLocation(FVector(0.0, 0.0, 100.0));
+
 	ParticipantClass = UChessHumanParticipant::StaticClass();
 
 	InteractionName = NSLOCTEXT("ChessPlayer", "InteractionName", "앉기");
@@ -379,14 +385,6 @@ void AChessPlayer::Interact_Implementation(APawn* Interactor)
 	{
 		Player->EnterChessPlayer(this);
 	}
-}
-
-void AChessPlayer::OnInteractionHover_Implementation(APawn* Interactor)
-{
-}
-
-void AChessPlayer::OnInteractionUnhover_Implementation(APawn* Interactor)
-{
 }
 
 FText AChessPlayer::GetInteractionName_Implementation()

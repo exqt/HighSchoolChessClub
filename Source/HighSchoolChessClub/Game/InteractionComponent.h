@@ -41,14 +41,15 @@ public:
 	bool TryInteract();
 	
 private:
-	/**
-	 * Viewport로부터 상호작용 가능한 Actor가 있는지 검사
-	 */
+	/** 카메라 방향과 가까운 상호작용 가능한 Actor를 검사 */
 	UFUNCTION(BlueprintCallable, Category="Interaction")
 	void CheckInteractable();
 
-	UPROPERTY(EditAnywhere, Category="Interaction", meta=(ClampMin="0.0", ClampMax="300.0"))
+	UPROPERTY(EditAnywhere, Category="Interaction Component", meta=(ClampMin="0.0", Units="cm"))
 	float InteractionDistance = 200.0f;
+
+	UPROPERTY(EditAnywhere, Category="Interaction Component", meta=(ClampMin="-1.0", ClampMax="1.0"))
+	float MinimumViewDot = 0.8f;
 	
 	UPROPERTY(Transient)
 	TObjectPtr<AActor> CurrentInteractable;

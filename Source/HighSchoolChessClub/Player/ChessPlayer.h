@@ -14,6 +14,7 @@ class UChessHumanParticipant;
 class UCommonInputSubsystem;
 class UCameraComponent;
 class UInputAction;
+class UInteractionWidgetComponent;
 class UPositionTweenComponent;
 class USceneComponent;
 class UStaticMeshComponent;
@@ -79,8 +80,6 @@ public:
 #pragma region Interaction
 	virtual bool CanInteract_Implementation(APawn* Interactor) override;
 	virtual void Interact_Implementation(APawn* Interactor) override;
-	virtual void OnInteractionHover_Implementation(APawn* Interactor) override;
-	virtual void OnInteractionUnhover_Implementation(APawn* Interactor) override;
 	virtual FText GetInteractionName_Implementation() override;
 #pragma endregion
 
@@ -108,6 +107,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Chess Player")
 	TObjectPtr<UPositionTweenComponent> PositionTween;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Chess Player")
+	TObjectPtr<UInteractionWidgetComponent> InteractionWidget;
 #pragma endregion
 
 #pragma region Interaction
