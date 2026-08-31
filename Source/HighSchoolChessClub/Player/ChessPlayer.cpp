@@ -30,8 +30,12 @@ AChessPlayer::AChessPlayer()
 
 	ChairCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Chair Camera"));
 	ChairCamera->SetupAttachment(SceneRoot);
-	ChairCamera->SetAutoActivate(true);
+	ChairCamera->SetAutoActivate(false);
 	ChairCamera->bUsePawnControlRotation = true;
+
+	ForwardCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Forward Camera"));
+	ForwardCamera->SetupAttachment(SceneRoot);
+	ForwardCamera->SetAutoActivate(true);
 
 	SeatAnchor = CreateDefaultSubobject<USceneComponent>(TEXT("Seat Anchor"));
 	SeatAnchor->SetupAttachment(SceneRoot);
@@ -80,7 +84,25 @@ void AChessPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	TickCamera(DeltaTime);
+	if (bCameraModeBlending)
+	{
+		CameraModeBlendElapsed += DeltaTime;
+		bCameraModeBlending = CameraModeBlendElapsed < CameraBlendTime;
+	}
 	UpdateChairMove();
+}
+
+void AChessPlayer::CalcCamera(const float DeltaTime, FMinimalViewInfo& OutResult)
+{
+	UCameraComponent* TargetCamera = GetCameraForMode(CameraMode);
+	TargetCamera->GetCameraView(DeltaTime, OutResult);
+	if (!bCameraModeBlending) return;
+
+	FMinimalViewInfo PreviousView;
+	GetCameraForMode(PreviousCameraMode)->GetCameraView(DeltaTime, PreviousView);
+	const float BlendAlpha = FMath::InterpEaseInOut(0.0f, 1.0f, FMath::Clamp(CameraModeBlendElapsed / CameraBlendTime, 0.0f, 1.0f), 2.0f);
+	PreviousView.BlendViewInfo(OutResult, BlendAlpha);
+	OutResult = PreviousView;
 }
 
 void AChessPlayer::EnterPlayer(AFirstPersonPlayer* InExplorationPawn)
@@ -92,6 +114,12 @@ void AChessPlayer::EnterPlayer(AFirstPersonPlayer* InExplorationPawn)
 
 	const FRotator ChairViewRotation = ChairCamera->GetComponentRotation();
 
+	CameraMode = EChessCameraMode::Forward;
+	PreviousCameraMode = CameraMode;
+	CameraModeBlendElapsed = 0.0f;
+	bCameraModeBlending = false;
+	ChairCamera->SetActive(false);
+	ForwardCamera->SetActive(true);
 	InitialViewRotation = ChairViewRotation;
 	ExplorationPawn = InExplorationPawn;
 	HumanParticipant = Participant;
@@ -104,8 +132,7 @@ void AChessPlayer::EnterPlayer(AFirstPersonPlayer* InExplorationPawn)
 
 	BeginPlayerView(PlayerController);
 
-	// TODO: Possess 시 Blend가 되지 않음
-	PlayerController->SetViewTargetWithBlend(this, CameraBlendTime, VTBlend_EaseInOut, 2.0f, true);
+	PlayerController->SetViewTarget(this);
 
 	PullChairIn();
 	ChessMatch->EnterMatchSetup();
@@ -114,6 +141,18 @@ void AChessPlayer::EnterPlayer(AFirstPersonPlayer* InExplorationPawn)
 void AChessPlayer::RequestStartMatch()
 {
 	ChessMatch->RequestStartMatch();
+}
+
+void AChessPlayer::SetCameraMode(const EChessCameraMode NewCameraMode)
+{
+	if (CameraMode == NewCameraMode) return;
+
+	PreviousCameraMode = CameraMode;
+	CameraMode = NewCameraMode;
+	CameraModeBlendElapsed = 0.0f;
+	bCameraModeBlending = CameraBlendTime > 0.0f;
+	ChairCamera->SetActive(CameraMode == EChessCameraMode::Board);
+	ForwardCamera->SetActive(CameraMode == EChessCameraMode::Forward);
 }
 
 void AChessPlayer::UnPossessed()
@@ -327,6 +366,11 @@ void AChessPlayer::TickCamera(float DeltaTime)
 	{
 		PlayerController->SetControlRotation(InitialViewRotation);
 	}
+}
+
+UCameraComponent* AChessPlayer::GetCameraForMode(const EChessCameraMode InCameraMode) const
+{
+	return InCameraMode == EChessCameraMode::Board ? ChairCamera : ForwardCamera;
 }
 
 void AChessPlayer::UpdateCursorFromMouse() const

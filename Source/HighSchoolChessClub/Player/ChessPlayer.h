@@ -18,10 +18,18 @@ class UInteractionWidgetComponent;
 class UPositionTweenComponent;
 class USceneComponent;
 class UStaticMeshComponent;
+struct FMinimalViewInfo;
 struct FInputActionValue;
 enum class ECommonInputType : uint8;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChessChairMoveFinished, bool, bPulledIn);
+
+UENUM(BlueprintType)
+enum class EChessCameraMode : uint8
+{
+	Board,
+	Forward
+};
 
 /* 월드에서 돌아다니는 Pawn이 실제로 체스를 플레이 하기 위해 Possess하는 Pawn */
 UCLASS(Blueprintable)
@@ -77,6 +85,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Chess Player")
 	void RequestStartMatch();
 
+	UFUNCTION(BlueprintCallable, Category="Chess Player")
+	void SetCameraMode(EChessCameraMode NewCameraMode);
+
+	UFUNCTION(BlueprintPure, Category="Chess Player")
+	EChessCameraMode GetCameraMode() const { return CameraMode; }
+
 #pragma region Interaction
 	virtual bool CanInteract_Implementation(APawn* Interactor) override;
 	virtual void Interact_Implementation(APawn* Interactor) override;
@@ -88,6 +102,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaTime) override;
+	virtual void CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void UnPossessed() override;
 #pragma endregion
@@ -101,6 +116,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Chess Player")
 	TObjectPtr<UCameraComponent> ChairCamera;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Chess Player")
+	TObjectPtr<UCameraComponent> ForwardCamera;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Chess Player")
 	TObjectPtr<USceneComponent> SeatAnchor;
@@ -128,6 +146,8 @@ private:
 	/* 매 Tick 카메라 시점 업데이트 */
 	void TickCamera(float DeltaTime);
 
+	UCameraComponent* GetCameraForMode(EChessCameraMode InCameraMode) const;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chess Player", meta=(AllowPrivateAccess="true", ClampMin="0.0", ClampMax="180.0"))
 	float MaxViewYaw = 60.0f;
 
@@ -140,8 +160,13 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chess Player", meta=(AllowPrivateAccess="true", ClampMin="0.0"))
 	float CameraBlendTime = 1.0f;
 
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Chess Player", meta=(AllowPrivateAccess="true"))
+	EChessCameraMode CameraMode = EChessCameraMode::Forward;
+
 	FRotator InitialChairCameraRelativeRotation = FRotator::ZeroRotator;
 	FRotator InitialViewRotation = FRotator::ZeroRotator;
+	EChessCameraMode PreviousCameraMode = EChessCameraMode::Forward;
+	float CameraModeBlendElapsed = 0.0f;
 	float PreviousViewYawMin = 0.0f;
 	float PreviousViewYawMax = 0.0f;
 	float PreviousViewPitchMin = 0.0f;
@@ -149,6 +174,7 @@ private:
 	bool bPreviousShowMouseCursor = false;
 	bool bLookHold = false;
 	bool bStickLookActive = false;
+	bool bCameraModeBlending = false;
 #pragma endregion
 
 #pragma region Runtime State
