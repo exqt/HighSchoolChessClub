@@ -3,6 +3,9 @@
 #include "CoreMinimal.h"
 #include "Game/ChessGameTypes.h"
 #include "GameFramework/Actor.h"
+#include "GameplayTagContainer.h"
+#include "SmartObjectTypes.h"
+#include "StructUtils/InstancedStruct.h"
 #include "ChessDesk.generated.h"
 
 class AChessPiece;
@@ -32,6 +35,15 @@ public:
 	UChessClockComponent* GetChessClock() const { return ChessClock; }
 
 #pragma region Seats
+	UFUNCTION(BlueprintCallable, Category="Chess Desk")
+	void RegisterSlot(FSmartObjectSlotHandle SlotHandle);
+
+	UFUNCTION(BlueprintCallable, Category="Chess Desk")
+	void SendEventToSlot(FGameplayTag EventTag, const FInstancedStruct& Payload);
+
+	UFUNCTION(BlueprintCallable, Category="Chess Desk")
+	void ResetSlots();
+
 	UFUNCTION(BlueprintCallable, Category="Chess Desk")
 	bool PullNPCChairIn(AActor* NPC);
 
@@ -108,6 +120,9 @@ protected:
 private:
 	UPROPERTY(Transient)
 	TMap<FIntPoint, TObjectPtr<AChessPiece>> PieceActorsBySquare;
+
+	UPROPERTY(Transient)
+	TArray<FSmartObjectSlotHandle> RegisteredSlots;
 
 	void RefreshCursorTransform();
 	void ShowLegalMoveCells(const TArray<FIntPoint>& Squares);

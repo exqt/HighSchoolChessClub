@@ -9,6 +9,9 @@
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
+#include "GameplayTagContainer.h"
+#include "SmartObjectSubsystem.h"
+#include "StructUtils/StructView.h"
 
 AChessDesk::AChessDesk()
 {
@@ -40,6 +43,28 @@ void AChessDesk::BeginPlay()
 	CursorSquare.Y = FMath::Clamp(CursorSquare.Y, 0, 7);
 	RefreshCursorTransform();
 	SetCursorVisible(false);
+}
+
+void AChessDesk::RegisterSlot(const FSmartObjectSlotHandle SlotHandle)
+{
+	if (SlotHandle.IsValid())
+	{
+		RegisteredSlots.AddUnique(SlotHandle);
+	}
+}
+
+void AChessDesk::SendEventToSlot(const FGameplayTag EventTag, const FInstancedStruct& Payload)
+{
+	USmartObjectSubsystem* SmartObjectSubsystem = USmartObjectSubsystem::GetCurrent(GetWorld());
+	for (const FSmartObjectSlotHandle SlotHandle : RegisteredSlots)
+	{
+		SmartObjectSubsystem->SendSlotEvent(SlotHandle, EventTag, FConstStructView(Payload));
+	}
+}
+
+void AChessDesk::ResetSlots()
+{
+	RegisteredSlots.Reset();
 }
 
 bool AChessDesk::PullNPCChairIn(AActor* NPC)

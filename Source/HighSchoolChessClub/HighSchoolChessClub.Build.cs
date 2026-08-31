@@ -22,6 +22,7 @@ public class HighSchoolChessClub : ModuleRules
 			"EnhancedInput",
 			"CommonUI",
 			"GameplayTags",
+			"SmartObjectsModule",
 			"UMG",
 			"ChessCore",
 			"ChessBots"
