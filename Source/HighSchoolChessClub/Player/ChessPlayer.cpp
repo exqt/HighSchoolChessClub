@@ -2,6 +2,7 @@
 
 #include "Camera/CameraComponent.h"
 #include "Camera/PlayerCameraManager.h"
+#include "Characters/NPC/NPCBase.h"
 #include "CommonInputSubsystem.h"
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -420,7 +421,8 @@ bool AChessPlayer::CanInteract_Implementation(APawn* Interactor)
 		&& IsValid(Cast<AFirstPersonPlayer>(Interactor))
 		&& !IsValid(ExplorationPawn)
 		&& ChessMatch
-		&& ChessMatch->GetHumanParticipant(PlayerPosition);
+		&& ChessMatch->GetHumanParticipant(PlayerPosition)
+		&& Cast<ANPCBase>(ChessMatch->GetPerformer(EChessPlayerPosition::PlayerB));
 }
 
 void AChessPlayer::Interact_Implementation(APawn* Interactor)

@@ -39,10 +39,27 @@ AChessDesk::AChessDesk()
 void AChessDesk::BeginPlay()
 {
 	Super::BeginPlay();
+	DefaultBoardOriginRelativeTransform = BoardOrigin->GetRelativeTransform();
 	CursorSquare.X = FMath::Clamp(CursorSquare.X, 0, 7);
 	CursorSquare.Y = FMath::Clamp(CursorSquare.Y, 0, 7);
 	RefreshCursorTransform();
 	SetCursorVisible(false);
+}
+
+void AChessDesk::SetBoardFlipped(const bool bFlipped)
+{
+	FTransform BoardTransform = DefaultBoardOriginRelativeTransform;
+	if (bFlipped)
+	{
+		const FVector OppositeCorner(7.0f * SquareSize, -7.0f * SquareSize, 0.0f);
+		BoardTransform.SetLocation(DefaultBoardOriginRelativeTransform.TransformPosition(OppositeCorner));
+		BoardTransform.SetRotation(DefaultBoardOriginRelativeTransform.GetRotation() * FQuat(FVector::UpVector, PI));
+	}
+	BoardOrigin->SetRelativeTransform(BoardTransform);
+	for (const TPair<FIntPoint, TObjectPtr<AChessPiece>>& Entry : PieceActorsBySquare)
+	{
+		Entry.Value->MovePieceImmediately(Entry.Value->GetActorLocation());
+	}
 }
 
 void AChessDesk::RegisterSlot(const FSmartObjectSlotHandle SlotHandle)

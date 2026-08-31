@@ -191,6 +191,7 @@ void UChessMatchComponent::SetMatchSettings(const FChessMatchSettings& InSetting
 		PlayerAColor = FMath::RandBool() ? EChessCorePieceColor::White : EChessCorePieceColor::Black;
 		break;
 	}
+	GetDesk()->SetBoardFlipped(PlayerAColor == EChessCorePieceColor::White);
 
 	GetChessClock()->ConfigureClock(MatchSettings.InitialTimeSeconds * 10, MatchSettings.IncrementSeconds * 10);
 	GetChessClock()->ResetClock();

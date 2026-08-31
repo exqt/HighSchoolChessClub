@@ -34,6 +34,9 @@ public:
 	UFUNCTION(BlueprintPure, Category="ChessDesk")
 	UChessClockComponent* GetChessClock() const { return ChessClock; }
 
+	UFUNCTION(BlueprintCallable, Category="Chess Desk")
+	void SetBoardFlipped(bool bFlipped);
+
 #pragma region Seats
 	UFUNCTION(BlueprintCallable, Category="Chess Desk")
 	void RegisterSlot(FSmartObjectSlotHandle SlotHandle);
@@ -123,6 +126,8 @@ private:
 
 	UPROPERTY(Transient)
 	TArray<FSmartObjectSlotHandle> RegisteredSlots;
+
+	FTransform DefaultBoardOriginRelativeTransform;
 
 	void RefreshCursorTransform();
 	void ShowLegalMoveCells(const TArray<FIntPoint>& Squares);
