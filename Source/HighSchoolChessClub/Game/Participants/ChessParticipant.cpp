@@ -1,8 +1,8 @@
 #include "ChessParticipant.h"
 
-#include "Game/ChessMatch.h"
+#include "Game/ChessMatchComponent.h"
 
-void UChessParticipant::Initialize(AChessMatch* InMatch, const EChessPlayerPosition InPosition, AActor* InPerformer) 
+void UChessParticipant::Initialize(UChessMatchComponent* InMatch, const EChessPlayerPosition InPosition, AActor* InPerformer)
 {
 	Match = InMatch;
 	Position = InPosition;

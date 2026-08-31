@@ -6,9 +6,11 @@
 #include "GameplayTagContainer.h"
 #include "Dialogue/CCCharacterData.h"
 #include "Game/ChessGameTypes.h"
+#include "Game/ChessHandAnimation.h"
 #include "NPCBase.generated.h"
 
 class UWidgetComponent;
+class UChessBotParticipant;
 class UChessParticipant;
 
 UENUM(BlueprintType)
@@ -21,10 +23,8 @@ enum class ENPCState : uint8
 	Playing
 };
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnChessMoveAnimationFinished, int32);
-
 UCLASS(Blueprintable)
-class HIGHSCHOOLCHESSCLUB_API ANPCBase : public ACharacter, public IInteractable
+class HIGHSCHOOLCHESSCLUB_API ANPCBase : public ACharacter, public IInteractable, public IChessHandAnimation
 {
 	GENERATED_BODY()
 
@@ -48,12 +48,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category="NPC Base")
 	void FinishChessMoveAnimation(int32 MoveId);
 
+	virtual void StartChessHandAnimation(const FChessMoveAnimationData& MoveData) override { StartChessMoveAnimation(MoveData); }
+
 	UFUNCTION(BlueprintPure, Category="NPCBase")
 	UChessParticipant* GetChessParticipant() const { return ActiveChessParticipant; }
 
-	void SetChessParticipant(UChessParticipant* InChessParticipant) { ActiveChessParticipant = InChessParticipant; }
+	UFUNCTION(BlueprintPure, Category="NPCBase")
+	TSubclassOf<UChessBotParticipant> GetChessParticipantClass() const { return ChessParticipantClass; }
 
-	FOnChessMoveAnimationFinished OnChessMoveAnimationFinished;
+	void SetChessParticipant(UChessParticipant* InChessParticipant) { ActiveChessParticipant = InChessParticipant; }
 
 protected:
 	virtual void BeginPlay() override;
@@ -76,6 +79,9 @@ protected:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="NPCBase")
 	TObjectPtr<UChessParticipant> ActiveChessParticipant;
+
+	UPROPERTY(EditDefaultsOnly, Category="NPCBase")
+	TSubclassOf<UChessBotParticipant> ChessParticipantClass;
 
 private:
 	UFUNCTION()

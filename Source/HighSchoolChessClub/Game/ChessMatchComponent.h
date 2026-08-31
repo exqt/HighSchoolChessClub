@@ -1,13 +1,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "Components/ActorComponent.h"
 #include "ChessCoreTypes.h"
 #include "Game/ChessMatchSettings.h"
 #include "Game/ChessGameTypes.h"
-#include "ChessMatch.generated.h"
+#include "ChessMatchComponent.generated.h"
 
 class AChessDesk;
+class ANPCBase;
 class UChessClockComponent;
 class UChessGameState;
 class UChessHumanParticipant;
@@ -25,17 +26,17 @@ enum class EChessMatchState : uint8
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChessMatchStateChanged, EChessMatchState, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChessBoardStateChanged, UChessGameState*, GameState);
 
-UCLASS(Blueprintable)
-class HIGHSCHOOLCHESSCLUB_API AChessMatch : public AActor
+UCLASS(BlueprintType, Blueprintable, ClassGroup=(Chess))
+class HIGHSCHOOLCHESSCLUB_API UChessMatchComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
-	AChessMatch();
+	UChessMatchComponent();
 
 #pragma region Board
-	UFUNCTION(BlueprintPure, Category="Chess Match")
-	AChessDesk* GetDesk() const { return Desk; }
+	UFUNCTION(BlueprintPure, Category="ChessMatchComponent")
+	AChessDesk* GetDesk() const;
 
 	bool TrySubmitMove(UChessParticipant* Participant, const FChessCoreMove& Move, EChessMoveVisualMode VisualMode = EChessMoveVisualMode::Tween);
 	bool TrySubmitMoveUci(UChessParticipant* Participant, const FString& UciMove);
@@ -49,36 +50,48 @@ public:
 	 */
 	bool GetPieceAtSquare(FIntPoint Square, FChessCorePiece& OutPiece) const;
 
-	UFUNCTION(BlueprintPure, Category="Chess Match")
+	UFUNCTION(BlueprintPure, Category="ChessMatchComponent")
 	FString GetFen() const;
 
-	UFUNCTION(BlueprintPure, Category="Chess Match")
+	UFUNCTION(BlueprintPure, Category="ChessMatchComponent")
 	EChessCorePieceColor GetSideToMove() const;
 
-	UFUNCTION(BlueprintPure, Category="Chess Match")
+	UFUNCTION(BlueprintPure, Category="ChessMatchComponent")
 	UChessGameState* GetChessState() const { return ChessState; }
 
-	UFUNCTION(BlueprintCallable, Category="Chess Match")
+	UFUNCTION(BlueprintCallable, Category="ChessMatchComponent")
 	void SetupInitialPosition();
 
-	UFUNCTION(BlueprintCallable, Category="ChessMatch")
+	UFUNCTION(BlueprintCallable, Category="ChessMatchComponent")
 	bool SetupPositionFromFen(const FString& Fen);
 
-	UPROPERTY(BlueprintAssignable, Category="ChessMatch")
+	UPROPERTY(BlueprintAssignable, Category="ChessMatchComponent")
 	FOnChessBoardStateChanged OnBoardStateChanged;
 #pragma endregion
 
 #pragma region Participants
-	UFUNCTION(BlueprintPure, Category="Chess Match")
+	UFUNCTION(BlueprintPure, Category="ChessMatchComponent")
 	UChessParticipant* GetParticipant(EChessPlayerPosition Position) const;
+
+	UFUNCTION(BlueprintPure, Category="ChessMatchComponent")
+	AActor* GetPerformer(EChessPlayerPosition Position) const;
+
+	UFUNCTION(BlueprintPure, Category="ChessMatchComponent")
+	TArray<ANPCBase*> GetNPCPerformers() const;
 
 	UChessHumanParticipant* GetHumanParticipant(EChessPlayerPosition Position) const;
 
-	UFUNCTION(BlueprintCallable, Category="Chess Match")
-	UChessParticipant* RegisterParticipant(EChessPlayerPosition Position, AActor* Performer);
+	UFUNCTION(BlueprintCallable, Category="ChessMatchComponent")
+	UChessParticipant* RegisterParticipant(EChessPlayerPosition Position, AActor* Performer, TSubclassOf<UChessParticipant> ParticipantClass);
 
-	UFUNCTION(BlueprintCallable, Category="Chess Match")
+	UFUNCTION(BlueprintCallable, Category="ChessMatchComponent")
 	bool UnregisterParticipant(UChessParticipant* Participant);
+
+	UFUNCTION(BlueprintCallable, Category="ChessMatchComponent")
+	UChessParticipant* RegisterNPCParticipant(EChessPlayerPosition Position, ANPCBase* NPCPerformer);
+
+	UFUNCTION(BlueprintCallable, Category="ChessMatchComponent")
+	bool UnregisterNPCParticipant(EChessPlayerPosition Position, ANPCBase* NPCPerformer);
 
 	/*
 	 * 등록된 HumanParticipant의 Pawn이 Unpossess되었음을 알린다.
@@ -86,84 +99,63 @@ public:
 	 */
 	void NotifyHumanPlayerUnpossessed(UChessHumanParticipant* Participant);
 
-	UFUNCTION(BlueprintPure, Category="Chess Match")
+	UFUNCTION(BlueprintPure, Category="ChessMatchComponent")
 	EChessCorePieceColor GetPlayerColor(EChessPlayerPosition Position) const;
 
-	UFUNCTION(BlueprintPure, Category="Chess Match")
+	UFUNCTION(BlueprintPure, Category="ChessMatchComponent")
 	EChessCorePieceColor GetHumanPlayerColor() const;
 
-	UFUNCTION(BlueprintPure, Category="Chess Match")
+	UFUNCTION(BlueprintPure, Category="ChessMatchComponent")
 	EChessPlayerPosition GetHumanPlayerPosition() const { return EChessPlayerPosition::PlayerA; }
 
-	UFUNCTION(BlueprintPure, Category="Chess Match")
-	EChessPlayerPosition GetNPCPlayerPosition() const { return EChessPlayerPosition::PlayerB; }
 #pragma endregion
 
 #pragma region Match
 	/* HumanParticipant의 Pawn Possess가 완료되면 매치 설정 단계로 전환한다. */
 	void EnterMatchSetup();
 
-	UFUNCTION(BlueprintCallable, Category="Chess Match")
+	UFUNCTION(BlueprintCallable, Category="ChessMatchComponent")
 	void RequestStartMatch();
 
-	UFUNCTION(BlueprintPure, Category="Chess Match")
+	UFUNCTION(BlueprintPure, Category="ChessMatchComponent")
 	EChessMatchState GetMatchState() const { return MatchState; }
 
-	UPROPERTY(BlueprintAssignable, Category="Chess Match")
+	UPROPERTY(BlueprintAssignable, Category="ChessMatchComponent")
 	FOnChessMatchStateChanged OnMatchStateChanged;
 #pragma endregion
 
 #pragma region Settings
-	UFUNCTION(BlueprintCallable, Category="Chess Match")
+	UFUNCTION(BlueprintCallable, Category="ChessMatchComponent")
 	void SetMatchSettings(const FChessMatchSettings& InSettings);
 
-	UFUNCTION(BlueprintPure, Category="Chess Match")
+	UFUNCTION(BlueprintPure, Category="ChessMatchComponent")
 	FChessMatchSettings GetMatchSettings() const { return MatchSettings; }
 #pragma endregion
 
 #pragma region Time
-	UFUNCTION(BlueprintPure, Category="Chess Match")
-	UChessClockComponent* GetChessClock() const { return ChessClock; }
+	UFUNCTION(BlueprintPure, Category="ChessMatchComponent")
+	UChessClockComponent* GetChessClock() const;
 #pragma endregion
 
 protected:
-#pragma region Actor
-	virtual void Tick(float DeltaSeconds) override;
+#pragma region Component
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 #pragma endregion
 
-#pragma region Components
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Match")
-	TObjectPtr<AChessDesk> Desk;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Chess Match")
-	TObjectPtr<UChessClockComponent> ChessClock;
-#pragma endregion
-
 #pragma region Debug
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ChessMatch")
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ChessMatchComponent")
 	bool bUseDebugPosition = false;
 
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ChessMatch", meta=(EditCondition="bUseDebugPosition"))
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ChessMatchComponent", meta=(EditCondition="bUseDebugPosition"))
 	FString DebugPositionFen = TEXT("8/7Q/2N5/8/8/k1pp4/2qp4/K7 b - - 1 1");
 #pragma endregion
 
 #pragma region Participants
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Match")
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ChessMatchComponent")
 	EChessCorePieceColor PlayerAColor = EChessCorePieceColor::White;
 
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Match")
-	TSubclassOf<UChessParticipant> PlayerAParticipantClass;
-
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Match")
-	TSubclassOf<UChessParticipant> PlayerBParticipantClass;
-
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Match")
-	TObjectPtr<AActor> PlayerAPerformer;
-
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Match")
-	TObjectPtr<AActor> PlayerBPerformer;
 #pragma endregion
 
 private:
@@ -177,17 +169,14 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UChessParticipant> PlayerBParticipant;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Chess Match", meta=(AllowPrivateAccess="true"))
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="ChessMatchComponent", meta=(AllowPrivateAccess="true"))
 	FChessMatchSettings MatchSettings;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="Chess Match", meta=(AllowPrivateAccess="true"))
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category="ChessMatchComponent", meta=(AllowPrivateAccess="true"))
 	EChessMatchState MatchState = EChessMatchState::WaitingForPlayers;
 #pragma endregion
 
 #pragma region Match Flow
-	/* BeginPlay 시 미리 지정된 Performer를 각 좌석의 Participant로 등록한다. */
-	void RegisterConfiguredParticipants();
-
 	/*
 	 * Participant 등록 상태가 바뀐 뒤 매치 상태를 동기화한다.
 	 * 대국 전 두 좌석 중 하나라도 비어 있으면 플레이어 대기 상태로 되돌린다.

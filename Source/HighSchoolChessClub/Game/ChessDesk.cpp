@@ -1,6 +1,8 @@
 #include "Game/ChessDesk.h"
 
 #include "Game/ChessGameTypes.h"
+#include "Game/ChessClockComponent.h"
+#include "Game/ChessMatchComponent.h"
 #include "Game/ChessPiece.h"
 #include "Player/ChessPlayer.h"
 #include "Components/InstancedStaticMeshComponent.h"
@@ -11,6 +13,8 @@
 AChessDesk::AChessDesk()
 {
 	PrimaryActorTick.bCanEverTick = false;
+	ChessClock = CreateDefaultSubobject<UChessClockComponent>(TEXT("Chess Clock"));
+	ChessMatch = CreateDefaultSubobject<UChessMatchComponent>(TEXT("Chess Match"));
 
 	USceneComponent* SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Scene Root"));
 	SetRootComponent(SceneRoot);

@@ -13,6 +13,7 @@ class HIGHSCHOOLCHESSCLUB_API UChessBotParticipant : public UChessParticipant
 public:
 	virtual void BeginTurn() override;
 	virtual void EndTurn() override;
+	void FinishChessMoveAnimation(int32 MoveId);
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="ChessBotParticipant")
@@ -21,7 +22,6 @@ protected:
 private:
 	UFUNCTION()
 	void OnMoveReady(const FChessBotResult& Result);
-	void HandleChessMoveAnimationFinished(int32 MoveId);
 
 	FGuid PendingRequestId;
 	FChessCoreMove PendingMove;

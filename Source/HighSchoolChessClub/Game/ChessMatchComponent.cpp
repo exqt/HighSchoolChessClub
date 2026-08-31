@@ -1,4 +1,4 @@
-#include "Game/ChessMatch.h"
+#include "Game/ChessMatchComponent.h"
 
 #include "ChessGameState.h"
 #include "Characters/NPC/NPCBase.h"
@@ -8,17 +8,14 @@
 #include "Game/Participants/ChessHumanParticipant.h"
 #include "Game/Participants/ChessParticipant.h"
 
-AChessMatch::AChessMatch()
+UChessMatchComponent::UChessMatchComponent()
 {
-	PrimaryActorTick.bCanEverTick = true;
-	ChessClock = CreateDefaultSubobject<UChessClockComponent>(TEXT("Chess Clock"));
-	PlayerAParticipantClass = UChessHumanParticipant::StaticClass();
-	PlayerBParticipantClass = UChessBotParticipant::StaticClass();
+	PrimaryComponentTick.bCanEverTick = true;
 }
 
-void AChessMatch::Tick(const float DeltaSeconds)
+void UChessMatchComponent::TickComponent(const float DeltaTime, const ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	Super::Tick(DeltaSeconds);
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	if (MatchState != EChessMatchState::Playing || !ChessState)
 	{
@@ -33,22 +30,21 @@ void AChessMatch::Tick(const float DeltaSeconds)
 	}
 }
 
-void AChessMatch::BeginPlay()
+void UChessMatchComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	ChessState = NewObject<UChessGameState>(this);
-	ChessClock->OnTimeExpired.AddDynamic(this, &ThisClass::HandleTimeExpired);
+	GetChessClock()->OnTimeExpired.AddDynamic(this, &ThisClass::HandleTimeExpired);
 
 	SetupInitialPosition();
 	SetMatchState(EChessMatchState::WaitingForPlayers);
-	RegisterConfiguredParticipants();
 	RefreshParticipantState();
 }
 
-void AChessMatch::EndPlay(const EEndPlayReason::Type EndPlayReason)
+void UChessMatchComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	ChessClock->OnTimeExpired.RemoveDynamic(this, &ThisClass::HandleTimeExpired);
-	ChessClock->StopClock();
+	GetChessClock()->OnTimeExpired.RemoveDynamic(this, &ThisClass::HandleTimeExpired);
+	GetChessClock()->StopClock();
 	if (PlayerAParticipant)
 	{
 		PlayerAParticipant->EndTurn();
@@ -56,25 +52,55 @@ void AChessMatch::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if (PlayerBParticipant)
 	{
 		PlayerBParticipant->EndTurn();
-		if (ANPCBase* NPCPerformer = Cast<ANPCBase>(PlayerBParticipant->GetPerformer()))
-		{
-			NPCPerformer->SetChessParticipant(nullptr);
-		}
+	}
+	for (ANPCBase* NPCPerformer : GetNPCPerformers())
+	{
+		NPCPerformer->SetChessParticipant(nullptr);
 	}
 	Super::EndPlay(EndPlayReason);
 }
 
-UChessParticipant* AChessMatch::GetParticipant(const EChessPlayerPosition Position) const
+AChessDesk* UChessMatchComponent::GetDesk() const
+{
+	return CastChecked<AChessDesk>(GetOwner());
+}
+
+UChessClockComponent* UChessMatchComponent::GetChessClock() const
+{
+	return GetDesk()->GetChessClock();
+}
+
+UChessParticipant* UChessMatchComponent::GetParticipant(const EChessPlayerPosition Position) const
 {
 	return Position == EChessPlayerPosition::PlayerA ? PlayerAParticipant : PlayerBParticipant;
 }
 
-UChessHumanParticipant* AChessMatch::GetHumanParticipant(const EChessPlayerPosition Position) const
+AActor* UChessMatchComponent::GetPerformer(const EChessPlayerPosition Position) const
+{
+	const UChessParticipant* Participant = GetParticipant(Position);
+	return Participant ? Participant->GetPerformer() : nullptr;
+}
+
+TArray<ANPCBase*> UChessMatchComponent::GetNPCPerformers() const
+{
+	TArray<ANPCBase*> NPCPerformers;
+	if (ANPCBase* PlayerANPC = Cast<ANPCBase>(GetPerformer(EChessPlayerPosition::PlayerA)))
+	{
+		NPCPerformers.Add(PlayerANPC);
+	}
+	if (ANPCBase* PlayerBNPC = Cast<ANPCBase>(GetPerformer(EChessPlayerPosition::PlayerB)))
+	{
+		NPCPerformers.Add(PlayerBNPC);
+	}
+	return NPCPerformers;
+}
+
+UChessHumanParticipant* UChessMatchComponent::GetHumanParticipant(const EChessPlayerPosition Position) const
 {
 	return Cast<UChessHumanParticipant>(GetParticipant(Position));
 }
 
-UChessParticipant* AChessMatch::RegisterParticipant(const EChessPlayerPosition Position, AActor* Performer)
+UChessParticipant* UChessMatchComponent::RegisterParticipant(const EChessPlayerPosition Position, AActor* Performer, const TSubclassOf<UChessParticipant> ParticipantClass)
 {
 	TObjectPtr<UChessParticipant>& Participant = Position == EChessPlayerPosition::PlayerA ? PlayerAParticipant : PlayerBParticipant;
 
@@ -83,11 +109,12 @@ UChessParticipant* AChessMatch::RegisterParticipant(const EChessPlayerPosition P
 		return Participant->GetPerformer() == Performer ? Participant.Get() : nullptr;
 	}
 
-	const TSubclassOf<UChessParticipant> ParticipantClass = Position == EChessPlayerPosition::PlayerA ? PlayerAParticipantClass : PlayerBParticipantClass;
-	UClass* RequiredClass = Position == EChessPlayerPosition::PlayerA ? UChessHumanParticipant::StaticClass() : UChessBotParticipant::StaticClass();
-	UClass* ClassToCreate = ParticipantClass && ParticipantClass->IsChildOf(RequiredClass) ? ParticipantClass.Get() : RequiredClass;
+	if (!ParticipantClass)
+	{
+		return nullptr;
+	}
 
-	Participant = NewObject<UChessParticipant>(this, ClassToCreate);
+	Participant = NewObject<UChessParticipant>(this, ParticipantClass);
 	Participant->Initialize(this, Position, Performer);
 	if (ANPCBase* NPCPerformer = Cast<ANPCBase>(Performer))
 	{
@@ -98,7 +125,7 @@ UChessParticipant* AChessMatch::RegisterParticipant(const EChessPlayerPosition P
 	return Participant;
 }
 
-bool AChessMatch::UnregisterParticipant(UChessParticipant* Participant)
+bool UChessMatchComponent::UnregisterParticipant(UChessParticipant* Participant)
 {
 	TObjectPtr<UChessParticipant>& RegisteredParticipant =
 		Participant->GetPosition() == EChessPlayerPosition::PlayerA ? PlayerAParticipant : PlayerBParticipant;
@@ -114,18 +141,41 @@ bool AChessMatch::UnregisterParticipant(UChessParticipant* Participant)
 		NPCPerformer->SetChessParticipant(nullptr);
 	}
 	RegisteredParticipant = nullptr;
-	RefreshParticipantState();
+	if (MatchState == EChessMatchState::Playing)
+	{
+		FinishMatch();
+	}
+	else
+	{
+		RefreshParticipantState();
+	}
 
 	return true;
 }
 
-void AChessMatch::RequestStartMatch()
+UChessParticipant* UChessMatchComponent::RegisterNPCParticipant(const EChessPlayerPosition Position, ANPCBase* NPCPerformer)
 {
+	return NPCPerformer ? RegisterParticipant(Position, NPCPerformer, NPCPerformer->GetChessParticipantClass()) : nullptr;
+}
+
+bool UChessMatchComponent::UnregisterNPCParticipant(const EChessPlayerPosition Position, ANPCBase* NPCPerformer)
+{
+	UChessParticipant* Participant = GetParticipant(Position);
+	return Participant && Participant->GetPerformer() == NPCPerformer && UnregisterParticipant(Participant);
+}
+
+void UChessMatchComponent::RequestStartMatch()
+{
+	if (MatchState != EChessMatchState::MatchSetup || !PlayerAParticipant || !PlayerBParticipant)
+	{
+		return;
+	}
+
 	SetMatchState(EChessMatchState::Playing);
 	BeginCurrentTurn();
 }
 
-void AChessMatch::SetMatchSettings(const FChessMatchSettings& InSettings)
+void UChessMatchComponent::SetMatchSettings(const FChessMatchSettings& InSettings)
 {
 	MatchSettings = InSettings;
 
@@ -142,11 +192,11 @@ void AChessMatch::SetMatchSettings(const FChessMatchSettings& InSettings)
 		break;
 	}
 
-	ChessClock->ConfigureClock(MatchSettings.InitialTimeSeconds * 10, MatchSettings.IncrementSeconds * 10);
-	ChessClock->ResetClock();
+	GetChessClock()->ConfigureClock(MatchSettings.InitialTimeSeconds * 10, MatchSettings.IncrementSeconds * 10);
+	GetChessClock()->ResetClock();
 }
 
-void AChessMatch::NotifyHumanPlayerUnpossessed(UChessHumanParticipant* Participant)
+void UChessMatchComponent::NotifyHumanPlayerUnpossessed(UChessHumanParticipant* Participant)
 {
 	if (!Participant || GetParticipant(Participant->GetPosition()) != Participant)
 	{
@@ -163,7 +213,7 @@ void AChessMatch::NotifyHumanPlayerUnpossessed(UChessHumanParticipant* Participa
 	}
 }
 
-bool AChessMatch::TrySubmitMove(UChessParticipant* Participant, const FChessCoreMove& Move, const EChessMoveVisualMode VisualMode)
+bool UChessMatchComponent::TrySubmitMove(UChessParticipant* Participant, const FChessCoreMove& Move, const EChessMoveVisualMode VisualMode)
 {
 	FChessCorePiece MovingPiece;
 	if (!GetPieceAtSquare(FIntPoint(Move.From.File, Move.From.Rank), MovingPiece))
@@ -179,11 +229,11 @@ bool AChessMatch::TrySubmitMove(UChessParticipant* Participant, const FChessCore
 
 	FChessCorePiece PieceAfterMove;
 	GetPieceAtSquare(FIntPoint(AppliedMove.To.File, AppliedMove.To.Rank), PieceAfterMove);
-	Desk->ApplyMoveToPieceActors(AppliedMove, MovingPiece, PieceAfterMove, VisualMode);
+	GetDesk()->ApplyMoveToPieceActors(AppliedMove, MovingPiece, PieceAfterMove, VisualMode);
 	OnBoardStateChanged.Broadcast(ChessState);
 
 	Participant->EndTurn();
-	ChessClock->ApplyIncrement(Participant->GetPosition());
+	GetChessClock()->ApplyIncrement(Participant->GetPosition());
 
 	if (ChessState->GetGameStatus().Result != EChessCoreGameResult::None)
 	{
@@ -197,13 +247,13 @@ bool AChessMatch::TrySubmitMove(UChessParticipant* Participant, const FChessCore
 	return true;
 }
 
-bool AChessMatch::TrySubmitMoveUci(UChessParticipant* Participant, const FString& UciMove)
+bool UChessMatchComponent::TrySubmitMoveUci(UChessParticipant* Participant, const FString& UciMove)
 {
 	FChessCoreMove Move;
 	return FindLegalMoveUci(UciMove, Move) && TrySubmitMove(Participant, Move);
 }
 
-bool AChessMatch::FindLegalMoveUci(const FString& UciMove, FChessCoreMove& OutMove) const
+bool UChessMatchComponent::FindLegalMoveUci(const FString& UciMove, FChessCoreMove& OutMove) const
 {
 	TArray<FChessCoreMove> LegalMoves;
 	ChessState->GetLegalMoves(LegalMoves);
@@ -222,7 +272,7 @@ bool AChessMatch::FindLegalMoveUci(const FString& UciMove, FChessCoreMove& OutMo
 	return true;
 }
 
-void AChessMatch::GetLegalMovesFrom(const FIntPoint Square, TArray<FChessCoreMove>& OutMoves) const
+void UChessMatchComponent::GetLegalMovesFrom(const FIntPoint Square, TArray<FChessCoreMove>& OutMoves) const
 {
 	TArray<FChessCoreMove> LegalMoves;
 	ChessState->GetLegalMoves(LegalMoves);
@@ -237,7 +287,7 @@ void AChessMatch::GetLegalMovesFrom(const FIntPoint Square, TArray<FChessCoreMov
 	}
 }
 
-bool AChessMatch::GetPieceAtSquare(const FIntPoint Square, FChessCorePiece& OutPiece) const
+bool UChessMatchComponent::GetPieceAtSquare(const FIntPoint Square, FChessCorePiece& OutPiece) const
 {
 	TArray<FChessCorePiece> Pieces;
 	ChessState->GetPieces(Pieces);
@@ -252,17 +302,17 @@ bool AChessMatch::GetPieceAtSquare(const FIntPoint Square, FChessCorePiece& OutP
 	return false;
 }
 
-FString AChessMatch::GetFen() const
+FString UChessMatchComponent::GetFen() const
 {
 	return ChessState->GetFen();
 }
 
-EChessCorePieceColor AChessMatch::GetSideToMove() const
+EChessCorePieceColor UChessMatchComponent::GetSideToMove() const
 {
 	return ChessState->GetSideToMove();
 }
 
-EChessCorePieceColor AChessMatch::GetPlayerColor(const EChessPlayerPosition Position) const
+EChessCorePieceColor UChessMatchComponent::GetPlayerColor(const EChessPlayerPosition Position) const
 {
 	if (Position == EChessPlayerPosition::PlayerA)
 	{
@@ -273,7 +323,7 @@ EChessCorePieceColor AChessMatch::GetPlayerColor(const EChessPlayerPosition Posi
 		: EChessCorePieceColor::White;
 }
 
-EChessCorePieceColor AChessMatch::GetHumanPlayerColor() const
+EChessCorePieceColor UChessMatchComponent::GetHumanPlayerColor() const
 {
 	if (GetHumanParticipant(EChessPlayerPosition::PlayerA))
 	{
@@ -286,7 +336,7 @@ EChessCorePieceColor AChessMatch::GetHumanPlayerColor() const
 	return EChessCorePieceColor::None;
 }
 
-void AChessMatch::SetupInitialPosition()
+void UChessMatchComponent::SetupInitialPosition()
 {
 	if (PlayerAParticipant)
 	{
@@ -297,39 +347,30 @@ void AChessMatch::SetupInitialPosition()
 		PlayerBParticipant->EndTurn();
 	}
 	ChessState->ResetToStartPosition();
-	ChessClock->ResetClock();
+	GetChessClock()->ResetClock();
 	RebuildDeskFromState();
 	OnBoardStateChanged.Broadcast(ChessState);
 }
 
-bool AChessMatch::SetupPositionFromFen(const FString& Fen)
+bool UChessMatchComponent::SetupPositionFromFen(const FString& Fen)
 {
 	if (MatchState != EChessMatchState::MatchSetup || !ChessState->SetFen(Fen))
 	{
 		return false;
 	}
 
-	ChessClock->ResetClock();
+	GetChessClock()->ResetClock();
 	RebuildDeskFromState();
 	OnBoardStateChanged.Broadcast(ChessState);
 	return true;
 }
 
-void AChessMatch::HandleTimeExpired(const EChessPlayerPosition Position)
+void UChessMatchComponent::HandleTimeExpired(const EChessPlayerPosition Position)
 {
 	FinishMatch();
 }
 
-void AChessMatch::RegisterConfiguredParticipants()
-{
-	if (PlayerAPerformer)
-	{
-		RegisterParticipant(EChessPlayerPosition::PlayerA, PlayerAPerformer);
-	}
-	RegisterParticipant(EChessPlayerPosition::PlayerB, PlayerBPerformer);
-}
-
-void AChessMatch::RefreshParticipantState()
+void UChessMatchComponent::RefreshParticipantState()
 {
 	if (!ChessState || MatchState == EChessMatchState::Playing || MatchState == EChessMatchState::Finished)
 	{
@@ -342,7 +383,7 @@ void AChessMatch::RefreshParticipantState()
 	}
 }
 
-void AChessMatch::EnterMatchSetup()
+void UChessMatchComponent::EnterMatchSetup()
 {
 	SetMatchState(EChessMatchState::MatchSetup);
 
@@ -352,7 +393,7 @@ void AChessMatch::EnterMatchSetup()
 	}
 }
 
-void AChessMatch::FinishMatch()
+void UChessMatchComponent::FinishMatch()
 {
 	if (MatchState == EChessMatchState::Finished)
 	{
@@ -367,11 +408,11 @@ void AChessMatch::FinishMatch()
 	{
 		PlayerBParticipant->EndTurn();
 	}
-	ChessClock->StopClock();
+	GetChessClock()->StopClock();
 	SetMatchState(EChessMatchState::Finished);
 }
 
-void AChessMatch::SetMatchState(const EChessMatchState NewState)
+void UChessMatchComponent::SetMatchState(const EChessMatchState NewState)
 {
 	if (MatchState == NewState)
 	{
@@ -382,36 +423,37 @@ void AChessMatch::SetMatchState(const EChessMatchState NewState)
 	OnMatchStateChanged.Broadcast(NewState);
 }
 
-void AChessMatch::BeginCurrentTurn()
+void UChessMatchComponent::BeginCurrentTurn()
 {
-	const EChessPlayerPosition ActivePosition = 
-		ChessState->GetSideToMove() == PlayerAColor ? EChessPlayerPosition::PlayerA : EChessPlayerPosition::PlayerB;
-	
-	if (ChessClock->IsClockRunning())
+	const EChessCorePieceColor SideToMove = ChessState->GetSideToMove();
+	const EChessPlayerPosition ActivePosition = SideToMove == PlayerAColor ? EChessPlayerPosition::PlayerA : EChessPlayerPosition::PlayerB;
+	UChessParticipant* ActiveParticipant = GetParticipantForColor(SideToMove);
+	if (!ActiveParticipant)
 	{
-		ChessClock->SetActivePlayer(ActivePosition);
-	}
-	else
-	{
-		ChessClock->StartClock(ActivePosition);
-	}
-	
-	GetParticipantForColor(ChessState->GetSideToMove())->BeginTurn();
-}
-
-void AChessMatch::RebuildDeskFromState()
-{
-	if (!Desk)
-	{
+		FinishMatch();
 		return;
 	}
 
-	TArray<FChessCorePiece> Pieces;
-	ChessState->GetPieces(Pieces);
-	Desk->RebuildPieceActors(Pieces);
+	if (GetChessClock()->IsClockRunning())
+	{
+		GetChessClock()->SetActivePlayer(ActivePosition);
+	}
+	else
+	{
+		GetChessClock()->StartClock(ActivePosition);
+	}
+	
+	ActiveParticipant->BeginTurn();
 }
 
-UChessParticipant* AChessMatch::GetParticipantForColor(const EChessCorePieceColor Color) const
+void UChessMatchComponent::RebuildDeskFromState()
+{
+	TArray<FChessCorePiece> Pieces;
+	ChessState->GetPieces(Pieces);
+	GetDesk()->RebuildPieceActors(Pieces);
+}
+
+UChessParticipant* UChessMatchComponent::GetParticipantForColor(const EChessCorePieceColor Color) const
 {
 	return Color == PlayerAColor ? PlayerAParticipant : PlayerBParticipant;
 }

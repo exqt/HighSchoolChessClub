@@ -4,9 +4,9 @@
 #include "Blueprint/UserWidget.h"
 #include "GameInfoPanel.generated.h"
 
-class AChessMatch;
 class UGridPanel;
 class UChessGameState;
+class UChessMatchComponent;
 class UMaterialAdvantageRow;
 struct FChessCoreMove;
 class UButton;
@@ -36,7 +36,7 @@ public:
 	void SetChessGameState(UChessGameState* InChessGameState);
 
 	UFUNCTION(BlueprintCallable, Category="GameInfoPanel")
-	void SetChessMatch(AChessMatch* InChessMatch);
+	void SetChessMatch(UChessMatchComponent* InChessMatch);
 	
 	UFUNCTION(BlueprintCallable, Category="GameInfoPanel")
 	void ResetAll();

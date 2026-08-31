@@ -1,10 +1,11 @@
 #include "ChessBotParticipant.h"
 
 #include "ChessBotSubsystem.h"
-#include "Characters/NPC/NPCBase.h"
 #include "Engine/GameInstance.h"
+#include "Engine/World.h"
 #include "Game/ChessDesk.h"
-#include "Game/ChessMatch.h"
+#include "Game/ChessHandAnimation.h"
+#include "Game/ChessMatchComponent.h"
 
 void UChessBotParticipant::BeginTurn()
 {
@@ -12,7 +13,7 @@ void UChessBotParticipant::BeginTurn()
 
 	FOnChessBotMoveReady OnCompleted;
 	OnCompleted.BindDynamic(this, &UChessBotParticipant::OnMoveReady);
-	PendingRequestId = Match->GetGameInstance()->GetSubsystem<UChessBotSubsystem>()->RequestMove(
+	PendingRequestId = Match->GetWorld()->GetGameInstance()->GetSubsystem<UChessBotSubsystem>()->RequestMove(
 		Match->GetFen(),
 		BotSettings,
 		OnCompleted);
@@ -20,16 +21,11 @@ void UChessBotParticipant::BeginTurn()
 
 void UChessBotParticipant::EndTurn()
 {
-	ANPCBase* NPCPerformer = Cast<ANPCBase>(GetPerformer());
-	if (NPCPerformer)
-	{
-		NPCPerformer->OnChessMoveAnimationFinished.RemoveAll(this);
-	}
 	PendingMoveId = INDEX_NONE;
 
 	if (PendingRequestId.IsValid())
 	{
-		Match->GetGameInstance()->GetSubsystem<UChessBotSubsystem>()->CancelRequest(PendingRequestId);
+		Match->GetWorld()->GetGameInstance()->GetSubsystem<UChessBotSubsystem>()->CancelRequest(PendingRequestId);
 		PendingRequestId.Invalidate();
 	}
 	Super::EndTurn();
@@ -57,33 +53,25 @@ void UChessBotParticipant::OnMoveReady(const FChessBotResult& Result)
 	FChessCorePiece MovingPiece;
 	Match->GetPieceAtSquare(FIntPoint(Move.From.File, Move.From.Rank), MovingPiece);
 
-	ANPCBase* NPCPerformer = Cast<ANPCBase>(GetPerformer());
+	IChessHandAnimation* HandAnimation = Cast<IChessHandAnimation>(GetPerformer());
 	FChessMoveAnimationData MoveData;
-	if (NPCPerformer && Match->GetDesk()->MakeMoveAnimationData(Move, MovingPiece, MoveData))
+	if (HandAnimation && Match->GetDesk()->MakeMoveAnimationData(Move, MovingPiece, MoveData))
 	{
 		MoveData.MoveId = ++LastMoveId;
 		PendingMove = Move;
 		PendingMoveId = MoveData.MoveId;
-		NPCPerformer->OnChessMoveAnimationFinished.RemoveAll(this);
-		NPCPerformer->OnChessMoveAnimationFinished.AddUObject(this, &ThisClass::HandleChessMoveAnimationFinished);
-		NPCPerformer->StartChessMoveAnimation(MoveData);
+		HandAnimation->StartChessHandAnimation(MoveData);
 		return;
 	}
 
 	Match->TrySubmitMove(this, Move);
 }
 
-void UChessBotParticipant::HandleChessMoveAnimationFinished(const int32 MoveId)
+void UChessBotParticipant::FinishChessMoveAnimation(const int32 MoveId)
 {
 	if (!bIsTurnActive || MoveId != PendingMoveId)
 	{
 		return;
-	}
-
-	ANPCBase* NPCPerformer = Cast<ANPCBase>(GetPerformer());
-	if (NPCPerformer)
-	{
-		NPCPerformer->OnChessMoveAnimationFinished.RemoveAll(this);
 	}
 
 	const FChessCoreMove Move = PendingMove;

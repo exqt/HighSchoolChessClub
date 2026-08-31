@@ -7,6 +7,8 @@
 
 class AChessPiece;
 class AChessPlayer;
+class UChessClockComponent;
+class UChessMatchComponent;
 class UInstancedStaticMeshComponent;
 class USceneComponent;
 class UStaticMeshComponent;
@@ -22,6 +24,12 @@ class HIGHSCHOOLCHESSCLUB_API AChessDesk : public AActor
 
 public:
 	AChessDesk();
+
+	UFUNCTION(BlueprintPure, Category="ChessDesk")
+	UChessMatchComponent* GetChessMatch() const { return ChessMatch; }
+
+	UFUNCTION(BlueprintPure, Category="ChessDesk")
+	UChessClockComponent* GetChessClock() const { return ChessClock; }
 
 #pragma region Seats
 	UFUNCTION(BlueprintCallable, Category="Chess Desk")
@@ -61,6 +69,12 @@ protected:
 	virtual void BeginPlay() override;
 
 #pragma region Components
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ChessDesk")
+	TObjectPtr<UChessMatchComponent> ChessMatch;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ChessDesk")
+	TObjectPtr<UChessClockComponent> ChessClock;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Chess Desk|Cursor")
 	TObjectPtr<UStaticMeshComponent> CursorMesh;
 

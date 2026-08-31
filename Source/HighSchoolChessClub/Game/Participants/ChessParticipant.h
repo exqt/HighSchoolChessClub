@@ -6,7 +6,7 @@
 #include "ChessParticipant.generated.h"
 
 class AActor;
-class AChessMatch;
+class UChessMatchComponent;
 
 /* 실제 ChessMatch에 참여하는 주체 */
 UCLASS(Abstract, BlueprintType, Blueprintable)
@@ -15,13 +15,13 @@ class HIGHSCHOOLCHESSCLUB_API UChessParticipant : public UObject
 	GENERATED_BODY()
 
 public:
-	void Initialize(AChessMatch* InMatch, EChessPlayerPosition InPosition, AActor* InPerformer);
+	void Initialize(UChessMatchComponent* InMatch, EChessPlayerPosition InPosition, AActor* InPerformer);
 
 	UFUNCTION(BlueprintPure, Category="Chess Participant")
 	EChessPlayerPosition GetPosition() const { return Position; }
 
 	UFUNCTION(BlueprintPure, Category="ChessParticipant")
-	AChessMatch* GetMatch() const { return Match; }
+	UChessMatchComponent* GetMatch() const { return Match; }
 
 	UFUNCTION(BlueprintPure, Category="ChessParticipant")
 	bool IsWinner(EChessCoreGameResult GameResult) const;
@@ -39,7 +39,7 @@ public:
 protected:
 #pragma region Runtime State
 	UPROPERTY(Transient)
-	TObjectPtr<AChessMatch> Match;
+	TObjectPtr<UChessMatchComponent> Match;
 
 	TWeakObjectPtr<AActor> Performer;
 	EChessPlayerPosition Position = EChessPlayerPosition::PlayerA;

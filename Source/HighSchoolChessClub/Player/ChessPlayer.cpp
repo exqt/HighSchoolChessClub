@@ -12,7 +12,7 @@
 #include "InputActionValue.h"
 #include "Game/ChessDesk.h"
 #include "Game/Participants/ChessHumanParticipant.h"
-#include "Game/ChessMatch.h"
+#include "Game/ChessMatchComponent.h"
 #include "Game/PositionTweenComponent.h"
 #include "Player/FirstPersonPlayer.h"
 #include "Player/FirstPersonPlayerController.h"
@@ -36,6 +36,7 @@ AChessPlayer::AChessPlayer()
 	SeatAnchor->SetupAttachment(SceneRoot);
 
 	PositionTween = CreateDefaultSubobject<UPositionTweenComponent>(TEXT("Position Tween"));
+	ParticipantClass = UChessHumanParticipant::StaticClass();
 
 	InteractionName = NSLOCTEXT("ChessPlayer", "InteractionName", "앉기");
 }
@@ -45,11 +46,12 @@ void AChessPlayer::BeginPlay()
 	Super::BeginPlay();
 	InitialChairCameraRelativeRotation = ChairCamera->GetRelativeRotation();
 	ChairOutWorldLocation = GetActorLocation();
+	ChessMatch = ChessDesk ? ChessDesk->GetChessMatch() : nullptr;
 	if (ChessMatch)
 	{
 		if (IsHumanSeat())
 		{
-			ChessMatch->RegisterParticipant(PlayerPosition, this);
+			ChessMatch->RegisterParticipant(PlayerPosition, this, ParticipantClass);
 		}
 	}
 }
@@ -64,6 +66,7 @@ void AChessPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 			ChessMatch->UnregisterParticipant(Participant);
 		}
 	}
+	ChessMatch = nullptr;
 	Super::EndPlay(EndPlayReason);
 }
 

@@ -5,7 +5,7 @@
 #include "InputCoreTypes.h"
 #include "Components/GridPanel.h"
 #include "Components/GridSlot.h"
-#include "Game/ChessMatch.h"
+#include "Game/ChessMatchComponent.h"
 #include "UI/Widgets/PlayChess/MaterialAdvantageRow.h"
 
 void UGameInfoPanel::SetCurrentPlyIndex(const int32 PlyIndex)
@@ -46,7 +46,7 @@ void UGameInfoPanel::SetChessGameState(UChessGameState* InChessGameState)
 	RefreshMaterialAdvantage();
 }
 
-void UGameInfoPanel::SetChessMatch(AChessMatch* InChessMatch)
+void UGameInfoPanel::SetChessMatch(UChessMatchComponent* InChessMatch)
 {
 	ChessGameState = InChessMatch->GetChessState();
 

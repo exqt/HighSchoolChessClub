@@ -7,6 +7,7 @@
 #include "Components/WidgetComponent.h"
 #include "Dialogue/CCDialogueSubsystem.h"
 #include "GameFramework/Controller.h"
+#include "Game/Participants/ChessBotParticipant.h"
 #include "Kismet/GameplayStatics.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -15,6 +16,7 @@ ANPCBase::ANPCBase()
 	PrimaryActorTick.bCanEverTick = true;
 	bUseControllerRotationYaw = true;
 	AutoPossessAI = EAutoPossessAI::PlacedInWorld;
+	ChessParticipantClass = UChessBotParticipant::StaticClass();
 
 	InteractionWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("InteractionWidgetComponent"));
 	InteractionWidget->SetupAttachment(GetCapsuleComponent());
@@ -65,7 +67,10 @@ FText ANPCBase::GetInteractionName_Implementation()
 
 void ANPCBase::FinishChessMoveAnimation(const int32 MoveId)
 {
-	OnChessMoveAnimationFinished.Broadcast(MoveId);
+	if (UChessBotParticipant* BotParticipant = Cast<UChessBotParticipant>(ActiveChessParticipant))
+	{
+		BotParticipant->FinishChessMoveAnimation(MoveId);
+	}
 }
 
 void ANPCBase::HandleDialogueActiveChanged(bool bIsActive)

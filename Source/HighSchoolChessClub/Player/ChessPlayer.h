@@ -7,8 +7,9 @@
 #include "ChessPlayer.generated.h"
 
 class AFirstPersonPlayer;
-class AChessMatch;
+class AChessDesk;
 class APlayerController;
+class UChessMatchComponent;
 class UChessHumanParticipant;
 class UCommonInputSubsystem;
 class UCameraComponent;
@@ -41,8 +42,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Chess Player")
 	void ReturnToExploration();
 
-	UFUNCTION(BlueprintPure, Category="Chess Player")
-	AChessMatch* GetChessMatch() const { return ChessMatch; }
+	UFUNCTION(BlueprintPure, Category="ChessPlayer")
+	UChessMatchComponent* GetChessMatch() const { return ChessMatch; }
 
 	UFUNCTION(BlueprintPure, Category="Chess Player")
 	EChessPlayerPosition GetPlayerPosition() const { return PlayerPosition; }
@@ -163,14 +164,20 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<AActor> SeatOccupantToDetachAfterMove;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UChessMatchComponent> ChessMatch;
 #pragma endregion
 
 #pragma region Chess
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Player", meta=(AllowPrivateAccess="true"))
-	TObjectPtr<AChessMatch> ChessMatch;
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ChessPlayer", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<AChessDesk> ChessDesk;
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Player", meta=(AllowPrivateAccess="true"))
 	EChessPlayerPosition PlayerPosition = EChessPlayerPosition::PlayerA;
+
+	UPROPERTY(EditDefaultsOnly, Category="ChessPlayer")
+	TSubclassOf<UChessHumanParticipant> ParticipantClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Chess Player", meta=(AllowPrivateAccess="true"))
 	FVector ChairPulledInLocalOffset = FVector(30.0f, 0.0f, 0.0f);
