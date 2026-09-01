@@ -11,6 +11,7 @@ void UGameTimer::SetInitialTime(const int32 InInitialTime)
 void UGameTimer::SetTime(const int32 InTime) const
 {
 	ClockText->SetText(FormatTime(InTime));
+	ProgressBar->SetPercent(InitialTime > 0 ? FMath::Clamp(static_cast<float>(InTime) / InitialTime, 0.0f, 1.0f) : 0.0f);
 }
 
 FText UGameTimer::FormatTime(const int InTime)
