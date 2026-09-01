@@ -36,6 +36,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Chess Desk")
 	void SetBoardFlipped(bool bFlipped);
+	bool IsBoardFlipped() const { return bBoardFlipped; }
 
 #pragma region Seats
 	UFUNCTION(BlueprintCallable, Category="Chess Desk")
@@ -128,6 +129,7 @@ private:
 	TArray<FSmartObjectSlotHandle> RegisteredSlots;
 
 	FTransform DefaultBoardOriginRelativeTransform;
+	bool bBoardFlipped = false;
 
 	void RefreshCursorTransform();
 	void ShowLegalMoveCells(const TArray<FIntPoint>& Squares);

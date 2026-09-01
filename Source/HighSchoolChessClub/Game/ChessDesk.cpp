@@ -48,6 +48,7 @@ void AChessDesk::BeginPlay()
 
 void AChessDesk::SetBoardFlipped(const bool bFlipped)
 {
+	bBoardFlipped = bFlipped;
 	FTransform BoardTransform = DefaultBoardOriginRelativeTransform;
 	if (bFlipped)
 	{

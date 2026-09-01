@@ -337,7 +337,7 @@ void AChessPlayer::CancelInput(const FInputActionValue& InputActionValue)
 
 FIntPoint AChessPlayer::ConvertInputToBoardDelta(const FIntPoint InputDelta) const
 {
-	if (PlayerPosition == InvertedInputPlayerPosition)
+	if ((PlayerPosition == InvertedInputPlayerPosition) != ChessDesk->IsBoardFlipped())
 	{
 		return FIntPoint(-InputDelta.X, -InputDelta.Y);
 	}
