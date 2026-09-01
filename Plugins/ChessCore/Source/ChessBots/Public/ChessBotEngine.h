@@ -26,6 +26,17 @@ struct CHESSBOTS_API FChessMctsSearchSettings
 	double BishopValue = 3.25;
 	double RookValue = 5.0;
 	double QueenValue = 9.0;
+	double MaterialWeight = 1.0;
+	double PieceActivityWeight = 1.0;
+	double MobilityWeight = 1.0;
+	double PawnStructureWeight = 1.0;
+	double KingSafetyWeight = 1.0;
+	double ThreatWeight = 1.0;
+	double PolicyPriorStrength = 1.0;
+	double CheckPolicyWeight = 2.0;
+	double CapturePolicyWeight = 0.6;
+	double AttackPolicyWeight = 0.35;
+	double DefensePolicyWeight = 0.2;
 	bool bLogSearch = true;
 	int32 LogCandidateCount = 5;
 };

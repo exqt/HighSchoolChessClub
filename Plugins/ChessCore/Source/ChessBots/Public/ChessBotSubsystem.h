@@ -26,6 +26,8 @@ public:
 	bool IsRequestPending(FGuid RequestId) const;
 
 private:
+	struct FBotEngineSession;
+
 	struct FPendingRequest
 	{
 		TSharedPtr<FChessBotCancellationToken, ESPMode::ThreadSafe> CancellationToken;
@@ -35,4 +37,5 @@ private:
 	void CompleteRequest(FGuid RequestId, FChessBotSearchResult&& SearchResult);
 
 	TMap<FGuid, FPendingRequest> PendingRequests;
+	TMap<TWeakObjectPtr<UObject>, TSharedPtr<FBotEngineSession, ESPMode::ThreadSafe>> EngineSessions;
 };

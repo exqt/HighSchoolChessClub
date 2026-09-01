@@ -51,6 +51,39 @@ struct CHESSBOTS_API FChessMctsSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ChessMctsSettings", meta=(ClampMin="0.0"))
 	float QueenValue = 9.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ChessMctsSettings", meta=(ClampMin="0.0"))
+	float MaterialWeight = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ChessMctsSettings", meta=(ClampMin="0.0"))
+	float PieceActivityWeight = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ChessMctsSettings", meta=(ClampMin="0.0"))
+	float MobilityWeight = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ChessMctsSettings", meta=(ClampMin="0.0"))
+	float PawnStructureWeight = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ChessMctsSettings", meta=(ClampMin="0.0"))
+	float KingSafetyWeight = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ChessMctsSettings", meta=(ClampMin="0.0"))
+	float ThreatWeight = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ChessMctsSettings", meta=(ClampMin="0.0"))
+	float PolicyPriorStrength = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ChessMctsSettings", meta=(ClampMin="0.0"))
+	float CheckPolicyWeight = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ChessMctsSettings", meta=(ClampMin="0.0"))
+	float CapturePolicyWeight = 0.6f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ChessMctsSettings", meta=(ClampMin="0.0"))
+	float AttackPolicyWeight = 0.35f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ChessMctsSettings", meta=(ClampMin="0.0"))
+	float DefensePolicyWeight = 0.2f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ChessMctsSettings")
 	bool bLogSearch = true;
 

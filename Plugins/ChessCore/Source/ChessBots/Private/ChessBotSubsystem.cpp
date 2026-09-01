@@ -5,6 +5,7 @@
 #include "Async/Async.h"
 #include "ChessMctsBot.h"
 #include "ChessRandomBot.h"
+#include "Misc/ScopeLock.h"
 
 namespace
 {
@@ -37,6 +38,19 @@ namespace
 	}
 }
 
+struct UChessBotSubsystem::FBotEngineSession
+{
+	FBotEngineSession(const EChessBotType InBotType, TUniquePtr<IChessBotEngine>&& InEngine)
+		: BotType(InBotType)
+		, Engine(MoveTemp(InEngine))
+	{
+	}
+
+	EChessBotType BotType;
+	TUniquePtr<IChessBotEngine> Engine;
+	FCriticalSection Mutex;
+};
+
 void UChessBotSubsystem::Deinitialize()
 {
 	for (TPair<FGuid, FPendingRequest>& Pair : PendingRequests)
@@ -44,13 +58,23 @@ void UChessBotSubsystem::Deinitialize()
 		Pair.Value.CancellationToken->Cancel();
 	}
 	PendingRequests.Reset();
+	EngineSessions.Reset();
 
 	Super::Deinitialize();
 }
 
 FGuid UChessBotSubsystem::RequestMove(const FString& Fen, const FChessBotSettings& Settings, FOnChessBotMoveReady OnCompleted)
 {
+	for (auto Iterator = EngineSessions.CreateIterator(); Iterator; ++Iterator)
+	{
+		if (!Iterator.Key().IsValid())
+		{
+			Iterator.RemoveCurrent();
+		}
+	}
+
 	const FGuid RequestId = FGuid::NewGuid();
+	UObject* RequestOwner = OnCompleted.GetUObject();
 	const TSharedPtr<FChessBotCancellationToken, ESPMode::ThreadSafe> CancellationToken =
 		MakeShared<FChessBotCancellationToken, ESPMode::ThreadSafe>();
 
@@ -71,6 +95,17 @@ FGuid UChessBotSubsystem::RequestMove(const FString& Fen, const FChessBotSetting
 	SearchRequest.MctsSettings.BishopValue = FMath::Max(0.0f, Settings.MctsSettings.BishopValue);
 	SearchRequest.MctsSettings.RookValue = FMath::Max(0.0f, Settings.MctsSettings.RookValue);
 	SearchRequest.MctsSettings.QueenValue = FMath::Max(0.0f, Settings.MctsSettings.QueenValue);
+	SearchRequest.MctsSettings.MaterialWeight = FMath::Max(0.0f, Settings.MctsSettings.MaterialWeight);
+	SearchRequest.MctsSettings.PieceActivityWeight = FMath::Max(0.0f, Settings.MctsSettings.PieceActivityWeight);
+	SearchRequest.MctsSettings.MobilityWeight = FMath::Max(0.0f, Settings.MctsSettings.MobilityWeight);
+	SearchRequest.MctsSettings.PawnStructureWeight = FMath::Max(0.0f, Settings.MctsSettings.PawnStructureWeight);
+	SearchRequest.MctsSettings.KingSafetyWeight = FMath::Max(0.0f, Settings.MctsSettings.KingSafetyWeight);
+	SearchRequest.MctsSettings.ThreatWeight = FMath::Max(0.0f, Settings.MctsSettings.ThreatWeight);
+	SearchRequest.MctsSettings.PolicyPriorStrength = FMath::Max(0.0f, Settings.MctsSettings.PolicyPriorStrength);
+	SearchRequest.MctsSettings.CheckPolicyWeight = FMath::Max(0.0f, Settings.MctsSettings.CheckPolicyWeight);
+	SearchRequest.MctsSettings.CapturePolicyWeight = FMath::Max(0.0f, Settings.MctsSettings.CapturePolicyWeight);
+	SearchRequest.MctsSettings.AttackPolicyWeight = FMath::Max(0.0f, Settings.MctsSettings.AttackPolicyWeight);
+	SearchRequest.MctsSettings.DefensePolicyWeight = FMath::Max(0.0f, Settings.MctsSettings.DefensePolicyWeight);
 	SearchRequest.MctsSettings.bLogSearch = Settings.MctsSettings.bLogSearch;
 	SearchRequest.MctsSettings.LogCandidateCount = FMath::Max(0, Settings.MctsSettings.LogCandidateCount);
 	SearchRequest.PreferredOpeningEcos.reserve(Settings.PreferredOpenings.Num());
@@ -81,13 +116,31 @@ FGuid UChessBotSubsystem::RequestMove(const FString& Fen, const FChessBotSetting
 	}
 
 	const EChessBotType BotType = Settings.BotType;
+	TSharedPtr<FBotEngineSession, ESPMode::ThreadSafe> EngineSession;
+	if (RequestOwner)
+	{
+		const TWeakObjectPtr<UObject> SessionKey(RequestOwner);
+		EngineSession = EngineSessions.FindRef(SessionKey);
+		if (!EngineSession || EngineSession->BotType != BotType)
+		{
+			EngineSession = MakeShared<FBotEngineSession, ESPMode::ThreadSafe>(BotType, CreateBotEngine(BotType));
+			EngineSessions.Add(SessionKey, EngineSession);
+		}
+	}
+	else
+	{
+		EngineSession = MakeShared<FBotEngineSession, ESPMode::ThreadSafe>(BotType, CreateBotEngine(BotType));
+	}
 	const TWeakObjectPtr<UChessBotSubsystem> WeakThis(this);
 
 	Async(EAsyncExecution::ThreadPool,
-		[WeakThis, RequestId, BotType, SearchRequest = MoveTemp(SearchRequest), CancellationToken]() mutable
+		[WeakThis, RequestId, SearchRequest = MoveTemp(SearchRequest), CancellationToken, EngineSession]() mutable
 		{
-			TUniquePtr<IChessBotEngine> BotEngine = CreateBotEngine(BotType);
-			FChessBotSearchResult SearchResult = BotEngine->FindMove(SearchRequest, *CancellationToken);
+			FChessBotSearchResult SearchResult;
+			{
+				FScopeLock Lock(&EngineSession->Mutex);
+				SearchResult = EngineSession->Engine->FindMove(SearchRequest, *CancellationToken);
+			}
 
 			AsyncTask(ENamedThreads::GameThread,
 				[WeakThis, RequestId, SearchResult = MoveTemp(SearchResult)]() mutable
