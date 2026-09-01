@@ -105,7 +105,7 @@ protected:
 	TObjectPtr<AChessPlayer> NPCChessPlayer;
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Chess Desk|Cursor")
-	FIntPoint CursorSquare = FIntPoint::ZeroValue;
+	FIntPoint CursorSquare = FIntPoint(3, 3);
 
 	UPROPERTY(EditDefaultsOnly, Category="Chess Desk")
 	TMap<EChessCorePieceType, TSoftClassPtr<AChessPiece>> ChessPieceClasses;
