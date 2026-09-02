@@ -121,6 +121,7 @@ UChessParticipant* UChessMatchComponent::RegisterParticipant(const EChessPlayerP
 		NPCPerformer->SetChessParticipant(Participant);
 	}
 	RefreshParticipantState();
+	OnParticipantRegistered.Broadcast(Participant);
 
 	return Participant;
 }
@@ -149,6 +150,7 @@ bool UChessMatchComponent::UnregisterParticipant(UChessParticipant* Participant)
 	{
 		RefreshParticipantState();
 	}
+	OnParticipantUnregistered.Broadcast(Participant);
 
 	return true;
 }

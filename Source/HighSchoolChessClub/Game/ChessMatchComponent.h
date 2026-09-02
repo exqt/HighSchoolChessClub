@@ -25,6 +25,8 @@ enum class EChessMatchState : uint8
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChessMatchStateChanged, EChessMatchState, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChessBoardStateChanged, UChessGameState*, GameState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChessParticipantRegistered, UChessParticipant*, Participant);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChessParticipantUnregistered, UChessParticipant*, Participant);
 
 UCLASS(BlueprintType, Blueprintable, ClassGroup=(Chess))
 class HIGHSCHOOLCHESSCLUB_API UChessMatchComponent : public UActorComponent
@@ -84,8 +86,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category="ChessMatchComponent")
 	UChessParticipant* RegisterParticipant(EChessPlayerPosition Position, AActor* Performer, TSubclassOf<UChessParticipant> ParticipantClass);
 
+	UPROPERTY(BlueprintAssignable, Category="ChessMatchComponent")
+	FOnChessParticipantRegistered OnParticipantRegistered;
+
 	UFUNCTION(BlueprintCallable, Category="ChessMatchComponent")
 	bool UnregisterParticipant(UChessParticipant* Participant);
+
+	UPROPERTY(BlueprintAssignable, Category="ChessMatchComponent")
+	FOnChessParticipantUnregistered OnParticipantUnregistered;
 
 	UFUNCTION(BlueprintCallable, Category="ChessMatchComponent")
 	UChessParticipant* RegisterNPCParticipant(EChessPlayerPosition Position, ANPCBase* NPCPerformer);
