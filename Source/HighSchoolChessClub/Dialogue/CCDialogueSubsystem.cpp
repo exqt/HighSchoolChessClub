@@ -1,6 +1,6 @@
 #include "Dialogue/CCDialogueSubsystem.h"
 
-#include "Dialogue/CCDialogueSettings.h"
+#include "UI/Core/CCUISettings.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "UI/Core/CCUISubsystem.h"
@@ -19,7 +19,7 @@ void UCCDialogueSubsystem::StartDialogue()
 		return;
 	}
 
-	const UCCDialogueSettings* Settings = GetDefault<UCCDialogueSettings>();
+	const UCCUIDeveloperSettings* Settings = GetDefault<UCCUIDeveloperSettings>();
 	const TSoftClassPtr<UDialogueScreen> DialogueScreenClass = Settings->DialogueScreenClass;
 	UCCUISubsystem* UISubsystem = UCCUISubsystem::Get(this);
 
@@ -27,21 +27,29 @@ void UCCDialogueSubsystem::StartDialogue()
 	bIsLoadingDialogueScreen = true;
 	const TSoftClassPtr<UCommonActivatableWidget> ActivatableDialogueScreenClass(DialogueScreenClass);
 	const FGameplayTag LayerTag = FGameplayTag::RequestGameplayTag(FName(TEXT("UI.Stack.InGame")));
+	const TWeakObjectPtr<UCCDialogueSubsystem> WeakThis(this);
 
 	UISubsystem->PushSoftWidgetToStackAsync(
 		LayerTag,
 		ActivatableDialogueScreenClass,
-		[this](UCommonActivatableWidget* PushedWidget)
+		[WeakThis](UCommonActivatableWidget* PushedWidget)
 		{
-			DialogueScreen = CastChecked<UDialogueScreen>(PushedWidget);
-			DialogueScreen->OnActivated().AddUObject(
-				this,
-				&ThisClass::HandleDialogueScreenActivated
-			);
-			DialogueScreen->OnDeactivated().AddUObject(
-				this,
-				&ThisClass::HandleDialogueScreenDeactivated
-			);
+			if (!WeakThis.IsValid())
+			{
+				return;
+			}
+
+			UCCDialogueSubsystem* Subsystem = WeakThis.Get();
+			if (!PushedWidget)
+			{
+				Subsystem->bIsLoadingDialogueScreen = false;
+				Subsystem->SetDialogueActive(false);
+				return;
+			}
+
+			Subsystem->DialogueScreen = CastChecked<UDialogueScreen>(PushedWidget);
+			Subsystem->DialogueScreen->OnActivated().AddUObject(Subsystem, &ThisClass::HandleDialogueScreenActivated);
+			Subsystem->DialogueScreen->OnDeactivated().AddUObject(Subsystem, &ThisClass::HandleDialogueScreenDeactivated);
 		}
 	);
 }
